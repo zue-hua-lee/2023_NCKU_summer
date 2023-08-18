@@ -4,9 +4,15 @@
 package controller
 
 import (
+	"io"
+	"os"
 	"fmt"
-	"errors"
-	"net/http"
+	"log"
+	"sort"
+	"strconv"
+	"math/rand"
+	"time"
+	"encoding/csv"
 	"github.com/hyperledger/fabric/eep/service"
 )
 
@@ -14,311 +20,183 @@ type Application struct {
 	Fabric *service.ServiceSetup
 }
 //////////////////////
-func (app *Application) Testing()  {
+func (app *Application) Testing() {
 	fmt.Println("123456789")
 }
-//////////////////////
-func (app *Application) MyHomeView(w http.ResponseWriter, r *http.Request)  {
-	showView(w, r, "myHome.html", nil)
+// CarNumber | Time_in | Time_out | SOC_in | SOC_out | EV_capacity | Type_code | location_x | location_y
+type Offer struct {
+	CarNum int
+    ArrTime int
+    DepTime int
+    ArrSoC int
+    DepSoC int
+    Acdc int
+    Capacity int
+	Location_x float64
+	Location_y float64
 }
-func (app *Application) MyMatchView(w http.ResponseWriter, r *http.Request)  {
-	showView(w, r, "myMatch.html", nil)
+type Option struct {
+	StationID string
+	ChargerID int
+    MaxSoC int
+    Price int
 }
-
-func (app *Application) Register(w http.ResponseWriter, r *http.Request)  {
-	carID := r.FormValue("carID")
-	userName := r.FormValue("userName")
-	capacity := r.FormValue("capacity")
-	password := r.FormValue("password")
-
-	var transactionID string
-	_ , err := app.Fabric.GetUserIDbyCarID(carID)	
-	if err == nil {
-		err = errors.New("Register ERROR! CarID already exist!")
-	}else{
-		transactionID, err = app.Fabric.Register(carID, userName, capacity, password)
-	}
-
-	data := &struct {
-		Flag1 bool
-		Msg1 string
-		Flag2 bool
-		Msg2 string
-		Flag3 bool
-		Msg3 string
-	}{
-		Flag1:true,
-		Msg1:"",
-		Flag2:false,
-		Msg2:"",
-		Flag3:false,
-		Msg3:"",
-	}
+func (app *Application) LoadAllOffer() []Offer {
+	// 讀取csv檔案
+	FilePath := "./web/static/csv/ev_schedule_1.csv"
+	file, err := os.OpenFile(FilePath, os.O_RDONLY, 0777)
 	if err != nil {
-		data.Msg1 = err.Error()
-	}else{
-		data.Msg1 = "Register success, Transaction ID: " + transactionID
+		log.Fatalln("找不到CSV檔案路徑:", FilePath, err)
 	}
-	showView(w, r, "myHome.html", data)
+	defer file.Close()
+
+	// 讀取第一行文字並忽略
+	r := csv.NewReader(file)
+	r.Read()
+
+	// 讀取請求資訊，逐行存到陣列中
+	var offers []Offer
+	for {
+		record, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		var offer Offer
+		checkCarNum, err := strconv.Atoi(record[0])
+		if err != nil {
+			log.Fatalln(err)
+		}
+		offer.CarNum = checkCarNum
+		checkArrTime, err := strconv.Atoi(record[1])
+		if err != nil {
+			log.Fatalln(err)
+		}
+		offer.ArrTime = checkArrTime
+		checkDepTime, err := strconv.Atoi(record[2])
+		if err != nil {
+			log.Fatalln(err)
+		}
+		offer.DepTime = checkDepTime
+		checkArrSoC, err := strconv.Atoi(record[3])
+		if err != nil {
+			log.Fatalln(err)
+		}
+		offer.ArrSoC = checkArrSoC
+		checkDepSoC, err := strconv.Atoi(record[4])
+		if err != nil {
+			log.Fatalln(err)
+		}
+		offer.DepSoC = checkDepSoC
+		checkCapacity, err := strconv.Atoi(record[5])
+		if err != nil {
+			log.Fatalln(err)
+		}
+		offer.Capacity = checkCapacity
+		checkAcdc, err := strconv.Atoi(record[6])
+		if err != nil {
+			log.Fatalln(err)
+		}
+		offer.Acdc = checkAcdc
+		checkLocation_x, err := strconv.ParseFloat(record[7], 64)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		offer.Location_x = checkLocation_x
+		checkLocation_y, err := strconv.ParseFloat(record[8], 64)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		offer.Location_y = checkLocation_y
+		offers = append(offers, offer)
+	}
+	// 將所有請求依照抵達先後順序排列
+	sort.Slice(offers, func(i, j int) bool {
+		return offers[i].ArrTime < offers[j].ArrTime
+	})
+	return offers
 }
-func (app *Application) ShowAllUser(w http.ResponseWriter, r *http.Request)  {
-	msg, err := app.Fabric.ShowAllUser()
 
-	data := &struct {
-		Flag1 bool
-		Msg1 string
-		Flag2 bool
-		Msg2 string
-		Flag3 bool
-		Msg3 string
-	}{
-		Flag1:true,
-		Msg1:"",
-		Flag2:false,
-		Msg2:"",
-		Flag3:false,
-		Msg3:"",
+func (app *Application) ChooseOption(options []Option) Option {
+	// 選擇1: 最高的承諾SoC
+	if options[0].MaxSoC > options[1].MaxSoC && options[0].MaxSoC > options[2].MaxSoC {
+		return options[0]
 	}
-	if err != nil {
-		data.Msg1 = err.Error()
-	}else{
-		data.Msg1 = "ShowAllUser success: " + msg
+	if options[1].MaxSoC > options[0].MaxSoC && options[1].MaxSoC > options[2].MaxSoC {
+		return options[1]
 	}
-	showView(w, r, "myHome.html", data)
-}
+	if options[2].MaxSoC > options[0].MaxSoC && options[2].MaxSoC > options[1].MaxSoC {
+		return options[2]
+	}
 
-var now_userID string = ""
-func (app *Application) Login(w http.ResponseWriter, r *http.Request)  {
-	carID := r.FormValue("carID")
-	password := r.FormValue("password")
+	// 選擇2: 價格最低者
+	rand.Seed(time.Now().UnixNano())
+	totalInverse := 0.0
+	for _, opt := range options {
+		totalInverse += 1.0 / float64(opt.Price)
+	}
+	randomValue := rand.Float64() * totalInverse
 
-	var err error
-	now_userID, err = app.Fabric.Login(carID, password)
-
-	data := &struct {
-		Flag1 bool
-		Msg1 string
-		Flag2 bool
-		Msg2 string
-		Flag3 bool
-		Msg3 string
-	}{
-		Flag1:false,
-		Msg1:"",
-		Flag2:true,
-		Msg2:"",
-		Flag3:false,
-		Msg3:"",
+	currentValue := 0.0
+	for _, opt := range options {
+		currentValue += 1.0 / float64(opt.Price)
+		if randomValue <= currentValue {
+			return opt
+		}
 	}
-	if err != nil {
-		data.Msg2 = err.Error()
-	}else{
-		data.Msg2 = "Login success! " + now_userID + " login!"
-		// now_userID, _ = app.Fabric.GetUserIDbyCarID(carID)
-	}
-	showView(w, r, "myHome.html", data)
-}
-func (app *Application) ShowNowUser(w http.ResponseWriter, r *http.Request)  {
-	msg, err := app.Fabric.ShowUserbyID(now_userID)
-
-	data := &struct {
-		Flag1 bool
-		Msg1 string
-		Flag2 bool
-		Msg2 string
-		Flag3 bool
-		Msg3 string
-	}{
-		Flag1:false,
-		Msg1:"",
-		Flag2:true,
-		Msg2:"",
-		Flag3:false,
-		Msg3:"",
-	}
-	if err != nil {
-		data.Msg2 = err.Error()
-	}else{
-		data.Msg2 = "ShowNowUser success: " + msg
-	}
-	showView(w, r, "myHome.html", data)
+	return options[len(options)-1]
 }
 
 var now_offerID string = ""
-func (app *Application) Offer(w http.ResponseWriter, r *http.Request)  {
-	arrTime := r.FormValue("arrTime")
-	depTime := r.FormValue("depTime")
-	arrSoC := r.FormValue("arrSoC")
-	depSoC := r.FormValue("depSoC")
-	acdc := r.FormValue("acdc")
-	origin := r.FormValue("origin")
-
+func (app *Application) SetOffer(offer Offer) {
 	var err error
-	now_offerID, err = app.Fabric.Offer(arrTime, depTime, arrSoC, depSoC, acdc, origin, now_userID)
-
-	data := &struct {
-		Flag1 bool
-		Msg1 string
-		Flag2 bool
-		Msg2 string
-		Flag3 bool
-		Msg3 string
-	}{
-		Flag1:false,
-		Msg1:"",
-		Flag2:false,
-		Msg2:"",
-		Flag3:true,
-		Msg3:"",
-	}
+	now_offerID, err = app.Fabric.Offer(strconv.Itoa(offer.CarNum), strconv.Itoa(offer.ArrTime), strconv.Itoa(offer.DepTime),
+										strconv.Itoa(offer.ArrSoC), strconv.Itoa(offer.DepSoC),
+					 					strconv.Itoa(offer.Acdc), strconv.Itoa(offer.Capacity),
+					 					strconv.FormatFloat(offer.Location_x, 'f', -1, 64),
+					 					strconv.FormatFloat(offer.Location_y, 'f', -1, 64))
 	if err != nil {
-		data.Msg3 = err.Error()
-	}else{
-		data.Msg3 = "Offer success, Transaction ID: " + now_offerID
+		log.Fatalln(err)
 	}
-	showView(w, r, "myHome.html", data)
 }
-func (app *Application) ShowAllOffer(w http.ResponseWriter, r *http.Request)  {
+func (app *Application) ShowAllOffer()  {
 	msg, err := app.Fabric.ShowAllOffer()
-
-	data := &struct {
-		Flag1 bool
-		Msg1 string
-		Flag2 bool
-		Msg2 string
-		Flag3 bool
-		Msg3 string
-	}{
-		Flag1:false,
-		Msg1:"",
-		Flag2:false,
-		Msg2:"",
-		Flag3:true,
-		Msg3:"",
-	}
 	if err != nil {
-		data.Msg3 = err.Error()
+		log.Fatalln(err)
 	}else{
-		data.Msg3 = "ShowAllOffer success: " + msg
+		fmt.Println(msg)
 	}
-	showView(w, r, "myHome.html", data)
 }
 
-func (app *Application) Match(w http.ResponseWriter, r *http.Request)  {
-	stationID := r.FormValue("stationID")
-	maxSoC := r.FormValue("maxSoC")
-	price := r.FormValue("price")
-
-	transactionID, err := app.Fabric.Match(stationID, maxSoC, price, now_offerID)
-
-	data := &struct {
-		Flag1 bool
-		Msg1 string
-		Flag2 bool
-		Msg2 string
-	}{
-		Flag1:true,
-		Msg1:"",
-		Flag2:false,
-		Msg2:"",
-	}
+func (app *Application) SetMatch(option Option)  {
+	_, err := app.Fabric.Match(option.StationID, strconv.Itoa(option.ChargerID), strconv.Itoa(option.MaxSoC), strconv.Itoa(option.Price), now_offerID)
 	if err != nil {
-		data.Msg1 = err.Error()
-	}else{
-		data.Msg1 = "Match success, Transaction ID: " + transactionID
+		log.Fatalln(err)
 	}
-	showView(w, r, "myMatch.html", data)
 }
-func (app *Application) ShowAllMatch(w http.ResponseWriter, r *http.Request)  {
+func (app *Application) ShowAllMatch()  {
 	msg, err := app.Fabric.ShowAllMatch()
-
-	data := &struct {
-		Flag1 bool
-		Msg1 string
-		Flag2 bool
-		Msg2 string
-	}{
-		Flag1:true,
-		Msg1:"",
-		Flag2:false,
-		Msg2:"",
-	}
 	if err != nil {
-		data.Msg1 = err.Error()
+		log.Fatalln(err)
 	}else{
-		data.Msg1 = "ShowAllMatch success: " + msg
+		fmt.Println(msg)
 	}
-	showView(w, r, "myMatch.html", data)
 }
-func (app *Application) Power(w http.ResponseWriter, r *http.Request)  {
-	stationID := r.FormValue("stationID")
-	chargerID := r.FormValue("chargerID")
-	power := r.FormValue("power")
-	state := r.FormValue("state")
-	timestamp := r.FormValue("timestamp")
 
-	transactionID, err := app.Fabric.Power(stationID, chargerID, power, state, timestamp)
-
-	data := &struct {
-		Flag1 bool
-		Msg1 string
-		Flag2 bool
-		Msg2 string
-	}{
-		Flag1:false,
-		Msg1:"",
-		Flag2:true,
-		Msg2:"",
-	}
+func (app *Application) SetPower(stationID string, chargerID, power, state, timestamp int)  {
+	_, err := app.Fabric.Power(stationID, strconv.Itoa(chargerID), strconv.Itoa(power), strconv.Itoa(state), strconv.Itoa(timestamp))
 	if err != nil {
-		data.Msg2 = err.Error()
-	}else{
-		data.Msg2 = "Power success, Transaction ID: " + transactionID
+		log.Fatalln(err)
 	}
-	showView(w, r, "myMatch.html", data)
 }
-func (app *Application) ShowAllPower(w http.ResponseWriter, r *http.Request)  {
+func (app *Application) ShowAllPower()  {
 	msg, err := app.Fabric.ShowAllPower()
-
-	data := &struct {
-		Flag1 bool
-		Msg1 string
-		Flag2 bool
-		Msg2 string
-	}{
-		Flag1:false,
-		Msg1:"",
-		Flag2:true,
-		Msg2:"",
-	}
 	if err != nil {
-		data.Msg2 = err.Error()
+		log.Fatalln(err)
 	}else{
-		data.Msg2 = "ShowAllPower success: " + msg
+		fmt.Println(msg)
 	}
-	showView(w, r, "myMatch.html", data)
-}
-func (app *Application) ShowPowerbyCharger(w http.ResponseWriter, r *http.Request)  {
-	stationID := r.FormValue("stationID_search")
-	chargerID := r.FormValue("chargerID_search")
-
-	msg, err := app.Fabric.ShowPowerbyCharger(stationID, chargerID)
-
-	data := &struct {
-		Flag1 bool
-		Msg1 string
-		Flag2 bool
-		Msg2 string
-	}{
-		Flag1:false,
-		Msg1:"",
-		Flag2:true,
-		Msg2:"",
-	}
-	if err != nil {
-		data.Msg2 = err.Error()
-	}else{
-		data.Msg2 = "ShowPowerbyCharger success: " + msg
-	}
-	showView(w, r, "myMatch.html", data)
 }
