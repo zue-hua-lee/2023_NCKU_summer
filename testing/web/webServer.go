@@ -45,17 +45,17 @@ func  WebStart(app *controller.Application) {
 		// 回傳參數: 每個樁的功率、目前場內汽車的SoC
 
 		// 將各個充電裝的功率上鏈
-		// fmt.Printf("第%d區間上鍊開始\n",i)
-		// for j := 1; j <= 12; j++{
-		// 	app.SetPower("A", j, 0, 0, i)
-		// }
-		// for j := 1; j <= 6; j++{
-		// 	app.SetPower("B", j, 30, 1, i)
-		// }
-		// for j := 1; j <= 20; j++{
-		// 	app.SetPower("C", j, 40, 1, i)
-		// }
-		// fmt.Printf("第%d區間上鍊結束\n",i)
+		fmt.Printf("第%d區間上鍊開始\n",i)
+		for j := 1; j <= 12; j++{
+			app.SetPower("A", j, 0, 0, i)
+		}
+		for j := 1; j <= 6; j++{
+			app.SetPower("B", j, 30, 1, i)
+		}
+		for j := 1; j <= 20; j++{
+			app.SetPower("C", j, 40, 1, i)
+		}
+		fmt.Printf("第%d區間上鍊結束\n",i)
 	}
 	fmt.Println("\n\nOffer")
 	app.ShowAllOffer()
