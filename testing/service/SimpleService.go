@@ -42,8 +42,8 @@ func (t *ServiceSetup) ShowAllMatch() (string, error){
 	return string(respone.Payload), nil
 }
 
-func (t *ServiceSetup) Power(stationID, chargerID, power, state, timestamp string) (string, error) {
-	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "power", Args: [][]byte{[]byte(stationID), []byte(chargerID), []byte(power), []byte(state), []byte(timestamp)}}
+func (t *ServiceSetup) Power(PowersAsBytes []byte) (string, error) {
+	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "power", Args: [][]byte{PowersAsBytes}}
 	respone, err := t.Client.Execute(req)
 	if err != nil {
 		return "", err
