@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>電動車充電預約</title>
+    <meta name="description" content="與區塊鏈結合的電動車充電預約網站" />
+    <!--google font setting-->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap"
+      rel="stylesheet"
+    />
+    <!--連css-->
+    <link rel="stylesheet" href="../static/css/style.css" />
+  </head>
+  <body>
+    <!--標題-->
+    <header>
+      <h1 class="headerTitle">
+        <img
+          width="3%"
+          height="3%"
+          src="../static/img/charger.png"
+          alt="logo"
+        />電動車充電預約
+      </h1>
+      <h4 class="headerText">與區塊鏈結合的電動車充電預約網站，使用者更放心</h4>
+    </header>
+    <!--導覽列-->
+    <nav>
+      <ul>
+        <li><a href="./index.html">首頁</a></li>
+        <li><a href="./request1.html">申請充電</a></li>
+        <li><a href="./trackYes.html">充電追蹤</a></li>
+        <!--不確定如果沒充電要怎麼跳轉頁面-->
+        <li><a href="./historyList.html">歷史紀錄</a></li>
+      </ul>
+    </nav>
+    <!--主要內容-->
+    <main>
+      <section class="container">
+        <img
+          class="progress"
+          width="45%"
+          height="45%"
+          src="../static/img/progress2.png"
+          alt="progress: 2/4"
+          style="display: block; margin: auto"
+        />
+      </section>
+      <table>
+        <!--這邊要補回傳值-->
+        <thead>
+          <tr>
+            <th>充電站</th>
+            <th>可充最大電量（%）</th>
+            <th>單價（/度）</th>
+            <th>總價</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>甲地</td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>乙地</td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>丙地</td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+      <br />
+      <br />
+      <form action="">
+        <label for="choice">選擇地點</label>
+        <input
+          type="radio"
+          id="place_1"
+          name="choice"
+          value="place_1"
+          required
+        />
+        <label for="place_1">甲地</label>
+        <input
+          type="radio"
+          id="place_2"
+          name="choice"
+          value="place_2"
+          required
+        />
+        <label for="place_2">乙地</label>
+        <input
+          type="radio"
+          id="place_3"
+          name="choice"
+          value="place_3"
+          required
+        />
+        <label for="place_3">丙地</label>
+        <br />
+        <br />
+        <br />
+        <a class="bt1" href="request3.html">送出</a>
+      </form>
+    </main>
+  </body>
+</html>

@@ -1,14 +1,14 @@
 package main
 
 import (
-    "fmt"
-    "encoding/json"
-    "strconv"
-    "strings"
-    "unicode"
+	"encoding/json"
+	"fmt"
+	"strconv"
+	"strings"
+	"unicode"
 
-    "github.com/hyperledger/fabric/core/chaincode/shim"
-    pb "github.com/hyperledger/fabric/protos/peer"
+	"github.com/hyperledger/fabric/core/chaincode/shim"
+	pb "github.com/hyperledger/fabric/protos/peer"
 )
 
 type SimpleChaincode struct {
@@ -28,7 +28,6 @@ type MyOffer struct {
     DepTime int              `json:"depTime"`
     ArrSoC int               `json:"arrSoC"`
     DepSoC int               `json:"depSoC"`
-    Origin string            `json:"origin"`
     Acdc int                 `json:"acdc"`
 }
 type MyMatch struct {
@@ -149,7 +148,8 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
     user.UserName = args[1]
     checkcapacity, err := strconv.Atoi(args[2])
     if err != nil || checkcapacity <= 0{
-        return shim.Error("電池容量格式錯誤!")
+        return shim.Error(err.Error())
+        // return shim.Error("電池容量格式錯誤!")
     }
     user.Capacity = checkcapacity
     if args[3] == "" {
@@ -283,8 +283,8 @@ func (t *SimpleChaincode) showUserbyID(stub shim.ChaincodeStubInterface, args []
 var offer_count int = 0
 func (t *SimpleChaincode) offer(stub shim.ChaincodeStubInterface, args []string) pb.Response {
     var err error
-	if len(args) != 7 {
-		return shim.Error("Incorrect number of arguments. Expecting 7")
+	if len(args) != 6 {
+		return shim.Error("Incorrect number of arguments. Expecting 6")
 	}
 
     var offer MyOffer
@@ -309,18 +309,14 @@ func (t *SimpleChaincode) offer(stub shim.ChaincodeStubInterface, args []string)
     }
     offer.DepSoC = checkdepSoC
     checkacdc, err := strconv.Atoi(args[4])
-    if err != nil || !(checkacdc == 0 || checkacdc == 1) {
+    if err != nil || !(checkacdc == 1 || checkacdc == 2) {
         return shim.Error("快/慢充格式錯誤!")
     }
     offer.Acdc = checkacdc
-    if !(args[5] == "A" || args[5] == "B" || args[5] == "C") {
-        return shim.Error("起點位置格式錯誤!")
-    }
-    offer.Origin = args[5]
-    if args[6] == "" {
+    if args[5] == "" {
 		return shim.Error("尚無使用者登入!")
     }
-    offer.UserID = args[6]
+    offer.UserID = args[5]
 
     offerID := "offer" + strconv.Itoa(offer_count)
     offer.OfferID = offerID

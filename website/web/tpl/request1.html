@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>電動車充電預約</title>
+    <meta name="description" content="與區塊鏈結合的電動車充電預約網站" />
+    <!--google font setting-->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC&display=swap"
+      rel="stylesheet"
+    />
+    <!--連css-->
+    <link rel="stylesheet" href="../static/css/style.css" />
+  </head>
+  <body>
+    <!--標題-->
+    <header>
+      <h1 class="headerTitle">
+        <img
+          width="3%"
+          height="3%"
+          src="../static/img/charger.png"
+          alt="logo"
+        />電動車充電預約
+      </h1>
+      <h4 class="headerText">與區塊鏈結合的電動車充電預約網站，使用者更放心</h4>
+    </header>
+    <!--導覽列-->
+    <nav>
+      <ul>
+        <li><a href="./index.html">首頁</a></li>
+        <li><a href="#">申請充電</a></li>
+        <li><a href="./trackYes.html">充電追蹤</a></li>
+        <!--不確定如果沒充電要怎麼跳轉頁面-->
+        <li><a href="./historyList.html">歷史紀錄</a></li>
+      </ul>
+    </nav>
+    <!--主要內容-->
+    <main>
+      <section class="container">
+        <img
+          class="progress"
+          width="45%"
+          height="45%"
+          src="../static/img/progress1.png"
+          alt="progress: 1/4"
+          style="display: block; margin: auto"
+        />
+      </section>
+      <div class="msg">
+        <form action="/offer" method="post">
+          <label for="arrTime">進場時間：</label>
+          <input type="time" id="arrTime" name="arrTime" required />
+          <br /><br />
+          <label for="depTime">離場時間：</label>
+          <input type="time" id="depTime" name="depTime" required />
+          <br /><br />
+          <label for="acdc">充電方式：</label>
+          <input type="radio" id="fast" name="acdc" value="1" required />
+          <label for="fast">快充</label>
+          <input type="radio" id="slow" name="acdc" value="2" required />
+          <label for="slow">慢充</label>
+          <br /><br />
+          <label for="arrSoC">目前電量：</label>
+          <input
+            type="number"
+            id="arrSoC"
+            name="arrSoC"
+            min="1"
+            max="100"
+            step="1"
+            required
+          />
+          <label for=""> kWh</label>
+          <br /><br />
+          <label for="depSoC">目標電量：</label>
+          <input
+            type="number"
+            id="depSoC"
+            name="depSoC"
+            min="1"
+            max="100"
+            step="1"
+            required
+          />
+          <label for=""> kWh</label>
+          <br /><br />
+          <label for="location">目前位置： (´･ω･`)?</label>
+          <!--之候補裝飾用定位地圖-->
+          <br />
+          {{if .Flag}} {{.Msg}} {{end}}
+          <br />
+          <input class="bt1" type="submit" value="送出" />
+        </form>
+      </div>
+    </main>
+  </body>
+</html>

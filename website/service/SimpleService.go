@@ -1,6 +1,6 @@
 /**
   author: Jerry
- */
+*/
 
 package service
 
@@ -50,8 +50,8 @@ func (t *ServiceSetup) ShowUserbyID(userID string) (string, error){
 	return string(respone.Payload), nil
 }
 
-func (t *ServiceSetup) Offer(arrTime, depTime, arrSoC, depSoC, acdc, origin, userID string) (string, error) {
-	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "offer", Args: [][]byte{[]byte(arrTime), []byte(depTime), []byte(arrSoC), []byte(depSoC), []byte(acdc), []byte(origin), []byte(userID)}}
+func (t *ServiceSetup) Offer(arrTime, depTime, arrSoC, depSoC, acdc, userID string) (string, error) {
+	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "offer", Args: [][]byte{[]byte(arrTime), []byte(depTime), []byte(arrSoC), []byte(depSoC), []byte(acdc), []byte(userID)}}
 	respone, err := t.Client.Execute(req)
 	if err != nil {
 		return "", err
