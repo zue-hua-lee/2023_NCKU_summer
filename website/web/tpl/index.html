@@ -41,14 +41,15 @@
           <input type="password" name="password" required />
           <br /><br />
           
-          {{if .Flag}} {{.Msg}} {{end}}
+          {{if .Flag}}
+          <div class="error-msg">{{.Msg}}</div>
+          {{end}}
+
           <br /><br />
           <button class="bt1" type="submit">送出</button>
         </form>
         <br /><br />
-
       </div>
-
       <p>
         <div class="msg">
           <label class="center" for="createAccount">還沒有帳號嗎？</label>

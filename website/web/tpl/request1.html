@@ -31,11 +31,12 @@
     <!--導覽列-->
     <nav>
       <ul>
-        <li><a href="./index.html">首頁</a></li>
+        <li><a href="./index.html">使用說明</a></li>
         <li><a href="#">申請充電</a></li>
         <li><a href="./trackYes.html">充電追蹤</a></li>
         <!--不確定如果沒充電要怎麼跳轉頁面-->
         <li><a href="./historyList.html">歷史紀錄</a></li>
+        <li><a href="./index.html">登出</a></li>
       </ul>
     </nav>
     <!--主要內容-->
@@ -64,19 +65,19 @@
           <input type="radio" id="slow" name="acdc" value="2" required />
           <label for="slow">慢充</label>
           <br /><br />
-          <label for="arrSoC">目前電量：</label>
+          <label for="arrSoC">目前電量（%）：</label>
           <input
             type="number"
             id="arrSoC"
             name="arrSoC"
-            min="1"
+            min="0"
             max="100"
             step="1"
             required
           />
           <label for=""> kWh</label>
           <br /><br />
-          <label for="depSoC">目標電量：</label>
+          <label for="depSoC">目標電量（%）：</label>
           <input
             type="number"
             id="depSoC"
@@ -91,7 +92,11 @@
           <label for="location">目前位置： (´･ω･`)?</label>
           <!--之候補裝飾用定位地圖-->
           <br />
-          {{if .Flag}} {{.Msg}} {{end}}
+
+          {{if .Flag}}
+          <div class="error-msg">{{.Msg}}</div>
+          {{end}}
+
           <br />
           <input class="bt1" type="submit" value="送出" />
         </form>

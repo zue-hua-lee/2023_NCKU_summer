@@ -1,98 +1,132 @@
-
 <html>
-<head>
+  <head>
     <title>Energy Exchange Platform</title>
-    <link rel="stylesheet" href="../static/css/style.css">
-    <link href="https://fonts.googleapis.com/css?family=Noto+Sans+TC|Roboto+Mono&display=swap" rel="stylesheet">
-</head>
-<body>
-
-<div class="common menu" style="font-family: 'Noto Sans TC'; font-size: 20px;">
-    <ul>
-        <li><img src="../static/img/chaindesk.png" width="120px" height="50px"/></li>
-        <li><a href="/myHome.html">我的首頁</a></li>
+    <link rel="stylesheet" href="../static/css/style.css" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Noto+Sans+TC|Roboto+Mono&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div
+      class="common menu"
+      style="font-family: 'Noto Sans TC'; font-size: 20px"
+    >
+      <ul>
+        <li>
+          <img src="../static/img/chaindesk.png" width="120px" height="50px" />
+        </li>
+        <li><a href="/myHome.html">我的使用說明</a></li>
         <li><a href="/myMatch.html">我的配對</a></li>
-    </ul>
-</div>
+      </ul>
+    </div>
 
-<div class="common main">
-    <div class="content" style="font-family: 'Noto Sans TC'; font-size: 16px;">
+    <div class="common main">
+      <div class="content" style="font-family: 'Noto Sans TC'; font-size: 16px">
         <h2>註冊</h2>
         <div class="msg">
-            <div class="formInfo" style=" font-family: 'Roboto Mono';">
-                <form action="/register" method="post">
-                    車牌號碼: <input type="text" name="carID" placeholder="ex. EMB-5678" /><br/>
-                    車主名稱: <input type="text" name="userName" placeholder="ex. p123" /><br/>
-                    電池容量: <input type="text" name="capacity" placeholder="ex. 60" /> (kWh)<br/>
-                    密碼: &nbsp;&nbsp;&nbsp;<input type="text" name="password" placeholder="ex. aaa" /><br/>
-                    <input type="submit" value="SUBMIT"/><br/><br/>
-                </form>
-            </div>
+          <div class="formInfo" style="font-family: 'Roboto Mono'">
+            <form action="/register" method="post">
+              車牌號碼:
+              <input
+                type="text"
+                name="carID"
+                placeholder="ex. EMB-5678"
+              /><br />
+              車主名稱:
+              <input type="text" name="userName" placeholder="ex. p123" /><br />
+              電池容量:
+              <input type="text" name="capacity" placeholder="ex. 60" />
+              (kWh)<br />
+              密碼: &nbsp;&nbsp;&nbsp;<input
+                type="text"
+                name="password"
+                placeholder="ex. aaa"
+              /><br />
+              <input type="submit" value="SUBMIT" /><br /><br />
+            </form>
+          </div>
         </div>
         <h2>顯示所有使用者</h2>
         <form action="/showAllUser" method="post">
-            <input type="submit" value="SEARCH"/><br/><br/>
+          <input type="submit" value="SEARCH" /><br /><br />
         </form>
-        <div class="showMsg" style=" font-family: 'Roboto Mono';">
-            {{if .Flag1}}
-                {{.Msg1}}
-            {{end}}
+        <div class="showMsg" style="font-family: 'Roboto Mono'">
+          {{if .Flag1}} {{.Msg1}} {{end}}
         </div>
 
         <h2>登入</h2>
         <div class="msg">
-            <div class="formInfo" style=" font-family: 'Roboto Mono';">
-                <form action="/login" method="post">
-                    車牌號碼: <input type="text" name="carID" placeholder="ex. EMB-5678" /><br/>
-                    密碼: &nbsp;&nbsp;&nbsp;<input type="text" name="password" placeholder="ex. aaa" /><br/>
-                    <input type="submit" value="SUBMIT"/><br/><br/>
-                </form>
-            </div>
+          <div class="formInfo" style="font-family: 'Roboto Mono'">
+            <form action="/login" method="post">
+              車牌號碼:
+              <input
+                type="text"
+                name="carID"
+                placeholder="ex. EMB-5678"
+              /><br />
+              密碼: &nbsp;&nbsp;&nbsp;<input
+                type="text"
+                name="password"
+                placeholder="ex. aaa"
+              /><br />
+              <input type="submit" value="SUBMIT" /><br /><br />
+            </form>
+          </div>
         </div>
         <h2>顯示現在使用者</h2>
         <form action="/showNowUser" method="post">
-            <input type="submit" value="SEARCH"/><br/><br/>
+          <input type="submit" value="SEARCH" /><br /><br />
         </form>
-        <div class="showMsg" style=" font-family: 'Roboto Mono';">
-            {{if .Flag2}}
-                {{.Msg2}}
-            {{end}}
+        <div class="showMsg" style="font-family: 'Roboto Mono'">
+          {{if .Flag2}} {{.Msg2}} {{end}}
         </div>
 
         <h2>發出充電請求</h2>
         <div class="msg">
-            <div class="formInfo" style=" font-family: 'Roboto Mono';">
-                <form action="/offer" method="post">
-                    開始時間: <input type="text" name="arrTime" placeholder="ex. 8:00" /><br/>
-                    結束時間: <input type="text" name="depTime" placeholder="ex. 12:00" /><br/>
-                    開始SoC: <input type="text" name="arrSoC" placeholder="ex. 30" /> (%)<br/>
-                    結束SoC: <input type="text" name="depSoC" placeholder="ex. 90" /> (%)<br/>
-                    快/慢充: <input type="text" name="acdc" placeholder="ex. 1" /> (快充:0,慢充:1)<br/>
-                    起點: &nbsp;&nbsp;&nbsp;<input type="text" name="origin" placeholder="ex. A" /> (A,B,C區域)<br/>
-                    <input type="submit" value="SUBMIT"/><br/><br/>
-                </form>
-            </div>
+          <div class="formInfo" style="font-family: 'Roboto Mono'">
+            <form action="/offer" method="post">
+              開始時間:
+              <input type="text" name="arrTime" placeholder="ex. 8:00" /><br />
+              結束時間:
+              <input type="text" name="depTime" placeholder="ex. 12:00" /><br />
+              開始SoC:
+              <input type="text" name="arrSoC" placeholder="ex. 30" /> (%)<br />
+              結束SoC:
+              <input type="text" name="depSoC" placeholder="ex. 90" /> (%)<br />
+              快/慢充:
+              <input type="text" name="acdc" placeholder="ex. 1" />
+              (快充:0,慢充:1)<br />
+              起點: &nbsp;&nbsp;&nbsp;<input
+                type="text"
+                name="origin"
+                placeholder="ex. A"
+              />
+              (A,B,C區域)<br />
+              <input type="submit" value="SUBMIT" /><br /><br />
+            </form>
+          </div>
         </div>
         <h2>顯示所有充電請求</h2>
         <form action="/showAllOffer" method="post">
-            <input type="submit" value="SEARCH"/><br/><br/>
+          <input type="submit" value="SEARCH" /><br /><br />
         </form>
-        <div class="showMsg" style=" font-family: 'Roboto Mono';">
-            {{if .Flag3}}
-                {{.Msg3}}
-            {{end}}
+        <div class="showMsg" style="font-family: 'Roboto Mono'">
+          {{if .Flag3}} {{.Msg3}} {{end}}
         </div>
 
-        <div class="calink" style="font-family: 'Noto Sans TC'; font-size: 20px;">
-            <a href="/myHome.html">我的首頁</a><br/>
-            <a href="/myMatch.html">我的配對</a><br/>
+        <div
+          class="calink"
+          style="font-family: 'Noto Sans TC'; font-size: 20px"
+        >
+          <a href="/myHome.html">我的使用說明</a><br />
+          <a href="/myMatch.html">我的配對</a><br />
         </div>
+      </div>
     </div>
-</div>
 
-<div class="common footer" style=" font-family: 'Roboto Mono';">
-    Energy Exchange Platform on Blockchain. Powered by Jerry Freeman.
-</div>
-
-</body>
+    <div class="common footer" style="font-family: 'Roboto Mono'">
+      Energy Exchange Platform on Blockchain. Powered by Jerry Freeman.
+    </div>
+  </body>
 </html>

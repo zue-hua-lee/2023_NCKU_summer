@@ -131,29 +131,28 @@ func (t *SimpleChaincode) register(stub shim.ChaincodeStubInterface, args []stri
     var user MyUser
     checkcarID := strings.Split(args[0],"-")
     if len(checkcarID) != 2{
-        return shim.Error("車牌號碼格式錯誤!")
+        return shim.Error("車牌號碼格式錯誤！車牌格式範例：EAB-1234")
     }
     checkcarID1 := strings.Split(checkcarID[0],"")
     if len(checkcarID1) != 3 || checkcarID[0][0] != 'E' || !unicode.IsUpper(rune(checkcarID[0][1])) || !unicode.IsUpper(rune(checkcarID[0][2])) {
-        return shim.Error("車牌號碼格式錯誤!")
+        return shim.Error("車牌號碼格式錯誤！車牌號碼前三碼應為大寫英文字母，且第一字為E")
     }
     checkcarID2, err := strconv.Atoi(checkcarID[1])
     if err != nil || checkcarID2 < 1000 || checkcarID2 > 9999{
-        return shim.Error("車牌號碼格式錯誤!")
+        return shim.Error("車牌號碼格式錯誤！車牌號碼後三碼應為四位數字。請重新填寫車排號碼")
     }
     user.CarID = args[0]
     if args[1] == "" {
-        return shim.Error("尚未填寫車主名稱!")
+        return shim.Error("尚未填寫車主名稱！請重新填寫車主名稱")
     }
     user.UserName = args[1]
     checkcapacity, err := strconv.Atoi(args[2])
     if err != nil || checkcapacity <= 0{
-        return shim.Error(err.Error())
-        // return shim.Error("電池容量格式錯誤!")
+        return shim.Error("電池容量格式錯誤！請重新填寫電池容量")
     }
     user.Capacity = checkcapacity
     if args[3] == "" {
-        return shim.Error("尚未填寫密碼!")
+        return shim.Error("尚未填寫密碼！請重新填寫密碼")
     }
     user.Password = args[3]
 
@@ -224,11 +223,11 @@ func (t *SimpleChaincode) login(stub shim.ChaincodeStubInterface, args []string)
             if password == user.Password {
                 return shim.Success([]byte(user.UserID))
             } else {
-                return shim.Error("Password ERROR!")
+                return shim.Error("密碼錯誤！請重新填寫登入資訊")
             }
         }
     }
-	return shim.Error("CarID ERROR!")
+	return shim.Error("車牌號碼錯誤！請重新填寫登入資訊")
 }
 func (t *SimpleChaincode) getUserIDbyCarID(stub shim.ChaincodeStubInterface, args []string) pb.Response {
     var err error
@@ -265,7 +264,7 @@ func (t *SimpleChaincode) showUserbyID(stub shim.ChaincodeStubInterface, args []
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
     if args[0] == "" {
-		return shim.Error("尚無使用者登入!")
+		return shim.Error("尚無使用者登入!請先登入")
     }
     userID := args[0]
     
@@ -290,31 +289,31 @@ func (t *SimpleChaincode) offer(stub shim.ChaincodeStubInterface, args []string)
     var offer MyOffer
     checkarrtime, err := strconv.Atoi(args[0])
     if err != nil || checkarrtime < 1 || checkarrtime > 288{
-        return shim.Error("開始充電時間格式錯誤!")
+        return shim.Error("開始充電時間格式錯誤！請重新填寫開始充電時間")
     }
     offer.ArrTime = checkarrtime
     checkdeptime, err := strconv.Atoi(args[1])
     if err != nil || checkdeptime < 1 || checkdeptime > 288 || checkdeptime <= offer.ArrTime {
-        return shim.Error("結束充電時間格式錯誤!")
+        return shim.Error("結束充電時間格式錯誤！請重新填寫結束充電時間")
     }
     offer.DepTime = checkdeptime
     checkarrSoC, err := strconv.Atoi(args[2])
     if err != nil || checkarrSoC < 0 || checkarrSoC > 100{
-        return shim.Error("開始電池狀態格式錯誤!")
+        return shim.Error("目前電量格式錯誤！請重新填寫目前電量")
     }
     offer.ArrSoC = checkarrSoC
     checkdepSoC, err := strconv.Atoi(args[3])
     if err != nil || checkdepSoC < 0 || checkdepSoC > 100 || checkdepSoC <= offer.ArrSoC {
-        return shim.Error("結束電池狀態格式錯誤!")
+        return shim.Error("目標電量格式錯誤！請重新填寫目標電量")
     }
     offer.DepSoC = checkdepSoC
     checkacdc, err := strconv.Atoi(args[4])
     if err != nil || !(checkacdc == 1 || checkacdc == 2) {
-        return shim.Error("快/慢充格式錯誤!")
+        return shim.Error("充電方式格式錯誤！請重新填寫充電方式")
     }
     offer.Acdc = checkacdc
     if args[5] == "" {
-		return shim.Error("尚無使用者登入!")
+		return shim.Error("尚無使用者登入！請先登入")
     }
     offer.UserID = args[5]
 

@@ -67,7 +67,11 @@
           <label for=""> kWh</label>
           <br />
           <br />
-          {{if .Flag}} {{.Msg}} {{end}}
+
+          {{if .Flag}} 
+          <div class="error-msg">{{.Msg}}</div>
+          {{end}}
+          
           <br />
           <button class="bt1" type="submit">送出</button>
         </form>
