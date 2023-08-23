@@ -31,14 +31,58 @@
     <!--導覽列-->
     <nav>
       <ul>
-        <li><a href="./index.html">使用說明</a></li>
+        <li><a href="./mainPage.html">使用說明</a></li>
         <li><a href="./request1.html">申請充電</a></li>
         <li><a href="./trackYes.html">充電追蹤</a></li>
         <!--不確定如果沒充電要怎麼跳轉頁面-->
         <li><a href="#">歷史紀錄</a></li>
+        <li><a href="./index.html">登出</a></li>
       </ul>
     </nav>
     <!--主要內容-->
-    <main></main>
+    <main>
+      <div class="msg">
+        <table class="table1">
+          <!--這邊要補回傳值-->
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>開始充電時間</th>
+              <th>結束充電時間</th>
+              <th>總充電量）</th>
+              <th>總價</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{if .FlagA}}
+            <tr>
+              <td>甲地</td>
+              <td>{{.MsgA1}}</td>
+              <td>{{.MsgA2}}</td>
+              <td>{{.MsgA3}} </td>
+            </tr>
+            {{end}}
+  
+            {{if .FlagB}}
+            <tr>
+              <td>乙地</td>
+              <td>{{.MsgB1}}</td>
+              <td>{{.MsgB2}}</td>
+              <td>{{.MsgB3}}</td>
+            </tr>
+            {{end}}
+            
+            {{if .FlagC}}
+            <tr>
+              <td>丙地</td>
+              <td>{{.MsgC1}}</td>
+              <td>{{.MsgC2}}</td>
+              <td>{{.MsgC3}}</td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+    </main>
   </body>
 </html>

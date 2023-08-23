@@ -6,14 +6,14 @@
 package controller
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
-	"time"
-	"strings"
 	"net/http"
 	"strconv"
-	"encoding/json"
+	"strings"
+	"time"
 
 	"github.com/hyperledger/fabric/eep/service"
 )
@@ -92,6 +92,21 @@ func (app *Application) Request3View(w http.ResponseWriter, r *http.Request) {
 	showView(w, r, "request3.html", data)
 }
 func (app *Application) Request4View(w http.ResponseWriter, r *http.Request) {
+	data := &struct {
+		Msg1 string
+		Msg2 string
+		Msg3 string
+		Msg4 string
+		Msg5 string
+		Msg6 string
+	}{
+		Msg1:"甲",
+		Msg2:"20",
+		Msg3:"快充",
+		Msg4:"30",
+		Msg5:"90",
+		Msg6:"100",
+	}
 	showView(w, r, "request4.html", nil)
 }
 func (app *Application) TrackNoView(w http.ResponseWriter, r *http.Request) {
