@@ -44,10 +44,52 @@ func (app *Application) Request1View(w http.ResponseWriter, r *http.Request) {
 	showView(w, r, "request1.html", nil)
 }
 func (app *Application) Request2View(w http.ResponseWriter, r *http.Request) {
-	showView(w, r, "request2.html", nil)
+	data := &struct {
+		FlagA bool
+		MsgA1 string
+		MsgA2 string
+		MsgA3 string
+		FlagB bool
+		MsgB1 string
+		MsgB2 string
+		MsgB3 string
+		FlagC bool
+		MsgC1 string
+		MsgC2 string
+		MsgC3 string
+	}{
+		FlagA:true,
+		MsgA1:"100",
+		MsgA2:"100",
+		MsgA3:"100",
+		FlagB:true,
+		MsgB1:"90",
+		MsgB2:"50",
+		MsgB3:"70",
+		FlagC:false,
+		MsgC1:"-",
+		MsgC2:"-",
+		MsgC3:"-",
+	}
+	showView(w, r, "request2.html", data)
 }
 func (app *Application) Request3View(w http.ResponseWriter, r *http.Request) {
-	showView(w, r, "request3.html", nil)
+	data := &struct {
+		Msg1 string
+		Msg2 string
+		Msg3 string
+		Msg4 string
+		Msg5 string
+		Msg6 string
+	}{
+		Msg1:"甲",
+		Msg2:"20",
+		Msg3:"快充",
+		Msg4:"30",
+		Msg5:"90",
+		Msg6:"100",
+	}
+	showView(w, r, "request3.html", data)
 }
 func (app *Application) Request4View(w http.ResponseWriter, r *http.Request) {
 	showView(w, r, "request4.html", nil)
@@ -177,7 +219,8 @@ func (app *Application) Offer(w http.ResponseWriter, r *http.Request)  {
 	depSoC := r.FormValue("depSoC")
 	acdc := r.FormValue("acdc")
 	cookie, _ := r.Cookie("now_userID")
-	now_offerID, err := app.Fabric.Offer(arrTime2, depTime2, arrSoC, depSoC, acdc, cookie.Value)
+	now_userID := cookie.Value
+	now_offerID, err := app.Fabric.Offer(arrTime2, depTime2, arrSoC, depSoC, acdc, now_userID)
 
 	if err != nil {
 		data := &struct {
@@ -197,9 +240,8 @@ func (app *Application) Offer(w http.ResponseWriter, r *http.Request)  {
 			Expires: time.Now().Add(3 * time.Hour),
 		}
 		http.SetCookie(w, &cookie)
-
-		fmt.Printf("[發送新請求] %s: %s\n", cookie.Value, now_offerID)
-		showView(w, r, "request2.html", nil)
+		fmt.Printf("[發送新請求] %s: %s\n", now_userID, now_offerID)
+		app.Request2View(w,r)
 	}
 }
 

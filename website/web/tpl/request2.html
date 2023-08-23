@@ -50,7 +50,7 @@
           style="display: block; margin: auto"
         />
       </section>
-      <table>
+      <table class="table1">
         <!--這邊要補回傳值-->
         <thead>
           <tr>
@@ -61,30 +61,39 @@
           </tr>
         </thead>
         <tbody>
+          {{if .FlagA}}
           <tr>
             <td>甲地</td>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td>{{.MsgA1}}</td>
+            <td>{{.MsgA2}}</td>
+            <td>{{.MsgA3}} </td>
           </tr>
+          {{end}}
+
+          {{if .FlagB}}
           <tr>
             <td>乙地</td>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td>{{.MsgB1}}</td>
+            <td>{{.MsgB2}}</td>
+            <td>{{.MsgB3}}</td>
           </tr>
+          {{end}}
+          
+          {{if .FlagC}}
           <tr>
             <td>丙地</td>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td>{{.MsgC1}}</td>
+            <td>{{.MsgC2}}</td>
+            <td>{{.MsgC3}}</td>
           </tr>
+          {{end}}
         </tbody>
       </table>
       <br />
       <br />
       <form action="">
         <label for="choice">選擇地點</label>
+        {{if .FlagA}}
         <input
           type="radio"
           id="place_1"
@@ -93,6 +102,9 @@
           required
         />
         <label for="place_1">甲地</label>
+        {{end}}
+
+        {{if .FlagB}}
         <input
           type="radio"
           id="place_2"
@@ -101,6 +113,9 @@
           required
         />
         <label for="place_2">乙地</label>
+        {{end}}
+      
+        {{if .FlagC}}
         <input
           type="radio"
           id="place_3"
@@ -109,6 +124,8 @@
           required
         />
         <label for="place_3">丙地</label>
+        {{end}}
+
         <br />
         <br />
         <br />
