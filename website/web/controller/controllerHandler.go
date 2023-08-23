@@ -8,12 +8,22 @@ package controller
 import (
 	"errors"
 	"fmt"
+	"log"
+	"time"
+	"strings"
 	"net/http"
 	"strconv"
-	"time"
+	"encoding/json"
 
 	"github.com/hyperledger/fabric/eep/service"
 )
+type Power struct {
+	StationID string           `json:"stationID"`
+	ChargerID int              `json:"chargerID"`
+    Power int                  `json:"power"`
+    State int                  `json:"state"`
+    TimeStamp int              `json:"timeStamp"`
+}
 
 type Application struct {
 	Fabric *service.ServiceSetup
@@ -48,7 +58,33 @@ func (app *Application) TrackNoView(w http.ResponseWriter, r *http.Request) {
 func (app *Application) TrackYesView(w http.ResponseWriter, r *http.Request) {
 	showView(w, r, "trackYes.html", nil)
 }
-var now_userID string = ""
+var index int = 1
+func (app *Application) Schedule() {
+	ticker := time.NewTicker(5 * time.Minute)
+	time.Sleep(5 * time.Minute)
+	for {
+		select {
+		case <-ticker.C:
+			fmt.Println("Current time:", time.Now())
+			// 將各個充電裝的功率上鏈
+			fmt.Printf("第%d區間上鍊開始\n",index)
+			var powers []Power
+			for j := 1; j <= 12; j++{
+				powers = append(powers, Power{StationID: "A", ChargerID: j, Power: 0, State: 0, TimeStamp: index})
+			}
+			for j := 1; j <= 6; j++{
+				powers = append(powers, Power{StationID: "B", ChargerID: j, Power: 30, State: 1, TimeStamp: index})
+			}
+			for j := 1; j <= 20; j++{
+				powers = append(powers, Power{StationID: "C", ChargerID: j, Power: 40, State: 1, TimeStamp: index})
+			}
+			app.Power(powers)
+			fmt.Printf("第%d區間上鍊結束\n",index)
+			index++
+		}
+	}
+}
+
 func (app *Application) Register(w http.ResponseWriter, r *http.Request)  {
 	carID := r.FormValue("carID")
 	userName := r.FormValue("userName")
@@ -71,10 +107,20 @@ func (app *Application) Register(w http.ResponseWriter, r *http.Request)  {
 			Flag:true,
 			Msg:"",
 		}
-		data.Msg = err.Error()
+		errMessage := strings.Split(err.Error(), "Description: ")
+		data.Msg = errMessage[1]
 		showView(w, r, "createAccount.html", data)
 	}else{
-		now_userID, err = app.Fabric.Login(carID, password)
+		now_userID, _ := app.Fabric.Login(carID, password)
+
+		cookie := http.Cookie{
+			Name:  "now_userID",
+			Value: now_userID,
+			Expires: time.Now().Add(3 * time.Hour),
+		}
+		http.SetCookie(w, &cookie)
+		
+		fmt.Printf("[新使用者註冊並登入] %s\n", now_userID)
 		showView(w, r, "mainPage.html", nil)
 	}
 }
@@ -83,8 +129,7 @@ func (app *Application) Login(w http.ResponseWriter, r *http.Request)  {
 	carID := r.FormValue("carID")
 	password := r.FormValue("password")
 
-	var err error
-	now_userID, err = app.Fabric.Login(carID, password)
+	now_userID, err := app.Fabric.Login(carID, password)
 
 	if err != nil {
 		data := &struct {
@@ -94,14 +139,22 @@ func (app *Application) Login(w http.ResponseWriter, r *http.Request)  {
 			Flag:true,
 			Msg:"",
 		}
-		data.Msg = err.Error()
+		errMessage := strings.Split(err.Error(), "Description: ")
+		data.Msg = errMessage[1]
 		showView(w, r, "index.html", data)
 	}else{
+		cookie := http.Cookie{
+			Name:  "now_userID",
+			Value: now_userID,
+			Expires: time.Now().Add(3 * time.Hour),
+		}
+		http.SetCookie(w, &cookie)
+
+		fmt.Printf("[使用者登入] %s\n", now_userID)
 		showView(w, r, "mainPage.html", nil)
 	}
 }
 
-var now_offerID string = ""
 func (app *Application) Offer(w http.ResponseWriter, r *http.Request)  {
 	arrTime := r.FormValue("arrTime")
 	layout := "15:04"
@@ -123,15 +176,8 @@ func (app *Application) Offer(w http.ResponseWriter, r *http.Request)  {
 	arrSoC := r.FormValue("arrSoC")
 	depSoC := r.FormValue("depSoC")
 	acdc := r.FormValue("acdc")
-	
-	fmt.Println("now_userID: "+ now_userID)
-	fmt.Println("arrTime2: "+ arrTime2)
-	fmt.Println("depTime2: "+ depTime2)
-	fmt.Println("arrSoC: "+ arrSoC)
-	fmt.Println("depSoC: "+ depSoC)
-	fmt.Println("acdc: "+ acdc)
-
-	now_offerID, err = app.Fabric.Offer(arrTime2, depTime2, arrSoC, depSoC, acdc, now_userID)
+	cookie, _ := r.Cookie("now_userID")
+	now_offerID, err := app.Fabric.Offer(arrTime2, depTime2, arrSoC, depSoC, acdc, cookie.Value)
 
 	if err != nil {
 		data := &struct {
@@ -141,9 +187,18 @@ func (app *Application) Offer(w http.ResponseWriter, r *http.Request)  {
 			Flag:true,
 			Msg:"",
 		}
-		data.Msg = err.Error()
+		errMessage := strings.Split(err.Error(), "Description: ")
+		data.Msg = errMessage[1]
 		showView(w, r, "request1.html", data)
 	}else{
+		cookie := http.Cookie{
+			Name:  "now_offerID",
+			Value: now_offerID,
+			Expires: time.Now().Add(3 * time.Hour),
+		}
+		http.SetCookie(w, &cookie)
+
+		fmt.Printf("[發送新請求] %s: %s\n", cookie.Value, now_offerID)
 		showView(w, r, "request2.html", nil)
 	}
 }
@@ -167,12 +222,14 @@ func (app *Application) Offer(w http.ResponseWriter, r *http.Request)  {
 // 		Msg2:"",
 // 	}
 // 	if err != nil {
-// 		data.Msg1 = err.Error()
+	// errMessage := strings.Split(err.Error(), "Description: ")
+	// data.Msg1 = errMessage[1]
 // 	}else{
 // 		data.Msg1 = "Match success, Transaction ID: " + transactionID
 // 	}
 // 	showView(w, r, "myMatch.html", data)
 // }
+
 // func (app *Application) ShowAllMatch(w http.ResponseWriter, r *http.Request)  {
 // 	msg, err := app.Fabric.ShowAllMatch()
 
@@ -188,39 +245,24 @@ func (app *Application) Offer(w http.ResponseWriter, r *http.Request)  {
 // 		Msg2:"",
 // 	}
 // 	if err != nil {
-// 		data.Msg1 = err.Error()
+	// errMessage := strings.Split(err.Error(), "Description: ")
+	// data.Msg1 = errMessage[1]
 // 	}else{
 // 		data.Msg1 = "ShowAllMatch success: " + msg
 // 	}
 // 	showView(w, r, "myMatch.html", data)
 // }
-// func (app *Application) Power(w http.ResponseWriter, r *http.Request)  {
-// 	stationID := r.FormValue("stationID")
-// 	chargerID := r.FormValue("chargerID")
-// 	power := r.FormValue("power")
-// 	state := r.FormValue("state")
-// 	timestamp := r.FormValue("timestamp")
 
-// 	transactionID, err := app.Fabric.Power(stationID, chargerID, power, state, timestamp)
-
-// 	data := &struct {
-// 		Flag1 bool
-// 		Msg1 string
-// 		Flag2 bool
-// 		Msg2 string
-// 	}{
-// 		Flag1:false,
-// 		Msg1:"",
-// 		Flag2:true,
-// 		Msg2:"",
-// 	}
-// 	if err != nil {
-// 		data.Msg2 = err.Error()
-// 	}else{
-// 		data.Msg2 = "Power success, Transaction ID: " + transactionID
-// 	}
-// 	showView(w, r, "myMatch.html", data)
-// }
+func (app *Application) Power(powers []Power)  {
+    PowersAsBytes, err := json.Marshal(powers)
+    if err != nil {
+        log.Fatalln(err)
+    }
+	_, err = app.Fabric.Power(PowersAsBytes)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
 // func (app *Application) ShowAllPower(w http.ResponseWriter, r *http.Request)  {
 // 	msg, err := app.Fabric.ShowAllPower()
 
@@ -236,7 +278,8 @@ func (app *Application) Offer(w http.ResponseWriter, r *http.Request)  {
 // 		Msg2:"",
 // 	}
 // 	if err != nil {
-// 		data.Msg2 = err.Error()
+	// errMessage := strings.Split(err.Error(), "Description: ")
+	// data.Msg2 = errMessage[1]
 // 	}else{
 // 		data.Msg2 = "ShowAllPower success: " + msg
 // 	}
@@ -260,7 +303,8 @@ func (app *Application) Offer(w http.ResponseWriter, r *http.Request)  {
 // 		Msg2:"",
 // 	}
 // 	if err != nil {
-// 		data.Msg2 = err.Error()
+	// errMessage := strings.Split(err.Error(), "Description: ")
+	// data.Msg2 = errMessage[1]
 // 	}else{
 // 		data.Msg2 = "ShowPowerbyCharger success: " + msg
 // 	}
