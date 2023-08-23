@@ -13,6 +13,7 @@ import (
 	"math/rand"
 	"time"
 	"encoding/csv"
+    "encoding/json"
 	"github.com/hyperledger/fabric/eep/service"
 )
 
@@ -23,24 +24,31 @@ type Application struct {
 func (app *Application) Testing() {
 	fmt.Println("123456789")
 }
-// CarNumber | Time_in | Time_out | SOC_in | SOC_out | EV_capacity | Type_code | location_x | location_y
 type Offer struct {
-	CarNum int
-    ArrTime int
-    DepTime int
-    ArrSoC int
-    DepSoC int
-    Acdc int
-    Capacity int
-	Location_x float64
-	Location_y float64
+    CarNum int               `json:"carNum"`
+    ArrTime int              `json:"arrTime"`
+    DepTime int              `json:"depTime"`
+    ArrSoC int               `json:"arrSoC"`
+    DepSoC int               `json:"depSoC"`
+    Acdc int                 `json:"acdc"`
+    Capacity int             `json:"capacity"`
+	Location_x float64       `json:"location_x"`
+	Location_y float64       `json:"location_y"`
 }
 type Option struct {
-	StationID string
-	ChargerID int
-    MaxSoC int
-    Price int
+	StationID string           `json:"stationID"`
+	ChargerID int              `json:"chargerID"`
+    MaxSoC int                 `json:"maxSoC"`
+    Price int                  `json:"price"`
 }
+type Power struct {
+	StationID string           `json:"stationID"`
+	ChargerID int              `json:"chargerID"`
+    Power int                  `json:"power"`
+    State int                  `json:"state"`
+    TimeStamp int              `json:"timeStamp"`
+}
+
 func (app *Application) LoadAllOffer() []Offer {
 	// 讀取csv檔案
 	FilePath := "./web/static/csv/ev_schedule_1.csv"
@@ -186,8 +194,12 @@ func (app *Application) ShowAllMatch()  {
 	}
 }
 
-func (app *Application) SetPower(stationID string, chargerID, power, state, timestamp int)  {
-	_, err := app.Fabric.Power(stationID, strconv.Itoa(chargerID), strconv.Itoa(power), strconv.Itoa(state), strconv.Itoa(timestamp))
+func (app *Application) SetPower(powers []Power)  {
+    PowersAsBytes, err := json.Marshal(powers)
+    if err != nil {
+        log.Fatalln(err)
+    }
+	_, err = app.Fabric.Power(PowersAsBytes)
 	if err != nil {
 		log.Fatalln(err)
 	}

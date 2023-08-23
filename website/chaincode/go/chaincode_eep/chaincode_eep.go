@@ -427,43 +427,47 @@ func (t *SimpleChaincode) showAllMatch(stub shim.ChaincodeStubInterface) pb.Resp
 var power_count int = 0
 func (t *SimpleChaincode) power(stub shim.ChaincodeStubInterface, args []string) pb.Response {
     var err error
-	if len(args) != 5 {
-		return shim.Error("Incorrect number of arguments. Expecting 5")
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
 
-    var power Power
-    if !(args[0] == "A" || args[0] == "B" || args[0] == "C") {
-        return shim.Error("充電站格式錯誤!")
+    var powers []Power
+    err = json.Unmarshal([]byte(args[0]), &powers)
+    if err != nil {
+        return shim.Error(err.Error())
     }
-    power.StationID = args[0]
-    checkchargerID, err := strconv.Atoi(args[1])
-    if err != nil || checkchargerID < 1 || checkchargerID > 30 {
-        return shim.Error("充電樁格式錯誤!")
-    }
-    power.ChargerID = checkchargerID
-    checkpower, err := strconv.Atoi(args[2])
-    if err != nil || checkpower < 0 {
-        return shim.Error("充電功率格式錯誤!")
-    }
-    power.Power = checkpower
-    checkstate, err := strconv.Atoi(args[3])
-    if err != nil || !(checkstate == 0 || checkstate == 1) {
-        return shim.Error("快/慢充格式錯誤!")
-    }
-    power.State = checkstate
-    checktimestamp, err := strconv.Atoi(args[4])
-    if err != nil || checktimestamp < 1 || checktimestamp > 288 {
-        return shim.Error("時間點格式錯誤!")
-    }
-    power.TimeStamp = checktimestamp
-    powerID := "power" + strconv.Itoa(power_count)
-    power.PowerID = powerID
-    power_count++
 
-    PowerAsBytes, _ := json.Marshal(power)
-    err = stub.PutState(powerID, PowerAsBytes)
-	if err != nil {
-		return shim.Error(err.Error())
+    for _, p := range powers {
+        var power Power
+        if !(p.StationID == "A" || p.StationID == "B" || p.StationID == "C") {
+            return shim.Error("充電站格式錯誤!")
+        }
+        power.StationID = p.StationID
+        if p.ChargerID < 1 || p.ChargerID > 30 {
+            return shim.Error("充電樁格式錯誤!")
+        }
+        power.ChargerID = p.ChargerID
+        if p.Power < 0 {
+            return shim.Error("充電功率格式錯誤!")
+        }
+        power.Power = p.Power
+        if !(p.State == 0 || p.State == 1) {
+            return shim.Error("配對狀態格式錯誤!")
+        }
+        power.State = p.State
+        if p.TimeStamp < 1 || p.TimeStamp > 288 {
+            return shim.Error("時間點格式錯誤!")
+        }
+        power.TimeStamp = p.TimeStamp
+        powerID := "power" + strconv.Itoa(power_count)
+        power.PowerID = powerID
+        power_count++
+    
+        PowerAsBytes, _ := json.Marshal(power)
+        err = stub.PutState(powerID, PowerAsBytes)
+        if err != nil {
+            return shim.Error(err.Error())
+        }
     }
     return shim.Success(nil)
 }

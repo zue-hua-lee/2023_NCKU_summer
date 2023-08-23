@@ -13,7 +13,8 @@ import (
 )
 
 func  WebStart(app *controller.Application)  {
-
+	go app.Schedule() // 啟動定時任務的 Goroutine
+	
 	fs := http.FileServer(http.Dir("web/static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 

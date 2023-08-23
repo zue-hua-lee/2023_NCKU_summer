@@ -15,7 +15,7 @@ func  WebStart(app *controller.Application) {
 	// 讀取新充電請求(csv)按時間排序存到陣列中
 	offers := app.LoadAllOffer()
 	var num int = 0
-	for i := 1; i <= 288; i++ {
+	for i := 1; i <= 5; i++ {
 		for ; num < len(offers) && offers[num].ArrTime == i; num++ {
 			// 新充電申請上鏈
 			fmt.Printf("time: %d, num: %d, EV: %d\n", i, num, offers[num].CarNum)
@@ -46,15 +46,17 @@ func  WebStart(app *controller.Application) {
 
 		// 將各個充電裝的功率上鏈
 		fmt.Printf("第%d區間上鍊開始\n",i)
+		var powers []controller.Power
 		for j := 1; j <= 12; j++{
-			app.SetPower("A", j, 0, 0, i)
+			powers = append(powers, controller.Power{StationID: "A", ChargerID: j, Power: 0, State: 0, TimeStamp: i})
 		}
 		for j := 1; j <= 6; j++{
-			app.SetPower("B", j, 30, 1, i)
+			powers = append(powers, controller.Power{StationID: "B", ChargerID: j, Power: 30, State: 1, TimeStamp: i})
 		}
 		for j := 1; j <= 20; j++{
-			app.SetPower("C", j, 40, 1, i)
+			powers = append(powers, controller.Power{StationID: "C", ChargerID: j, Power: 40, State: 1, TimeStamp: i})
 		}
+		app.SetPower(powers)
 		fmt.Printf("第%d區間上鍊結束\n",i)
 	}
 	fmt.Println("\n\nOffer")
