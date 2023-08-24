@@ -19,22 +19,21 @@ func  WebStart(app *controller.Application)  {
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	http.HandleFunc("/", app.IndexView)
-	http.HandleFunc("/createAccount.html", app.CreateAccountView)
-	http.HandleFunc("/historyList.html", app.HistoryListView)
+
+    http.HandleFunc("/login", app.Login)
+    http.HandleFunc("/register", app.Register)
 	http.HandleFunc("/index.html", app.IndexView)
+	http.HandleFunc("/createAccount.html", app.CreateAccountView)
+
 	http.HandleFunc("/mainPage.html", app.MainPageView)
 	http.HandleFunc("/request1.html", app.Request1View)
-	http.HandleFunc("/request2.html", app.Request2View)
-	http.HandleFunc("/request3.html", app.Request3View)
-	http.HandleFunc("/request4.html", app.Request4View)
-	http.HandleFunc("/trackNo.html", app.TrackNoView)
-	http.HandleFunc("/trackYes.html", app.TrackYesView)
-
-    http.HandleFunc("/register", app.Register)
-    // http.HandleFunc("/showAllUser", app.ShowAllUser)
-    http.HandleFunc("/login", app.Login)
-    // http.HandleFunc("/showNowUser", app.ShowNowUser)
     http.HandleFunc("/offer", app.Offer)
+	http.HandleFunc("/track", app.TrackView)
+	http.HandleFunc("/history", app.HistoryListView)
+
+	
+    // http.HandleFunc("/showAllUser", app.ShowAllUser)
+    // http.HandleFunc("/showNowUser", app.ShowNowUser)
 	// http.HandleFunc("/showAllOffer", app.ShowAllOffer)
     // http.HandleFunc("/match", app.Match)
 	// http.HandleFunc("/showAllMatch", app.ShowAllMatch)

@@ -17,6 +17,12 @@ import (
 
 	"github.com/hyperledger/fabric/eep/service"
 )
+type Option struct {
+	StationID string           `json:"stationID"`
+	ChargerID int              `json:"chargerID"`
+    MaxSoC int                 `json:"maxSoC"`
+    Price int                  `json:"price"`
+}
 type Power struct {
 	StationID string           `json:"stationID"`
 	ChargerID int              `json:"chargerID"`
@@ -28,15 +34,57 @@ type Power struct {
 type Application struct {
 	Fabric *service.ServiceSetup
 }
+
+func setCookie(w http.ResponseWriter, name, value string) {
+    cookie := http.Cookie{
+        Name:    name,
+        Value:   value,
+        Expires: time.Now().Add(3 * time.Hour),
+    }
+    http.SetCookie(w, &cookie)
+}
+func clearCookies(w http.ResponseWriter, cookieNames ...string) {
+    for _, name := range cookieNames {
+        cookie := http.Cookie{
+            Name:    name,
+            Value:   "",
+            Expires: time.Now().Add(-time.Hour), // 設置過期時間為過去的時間
+        }
+        http.SetCookie(w, &cookie)
+    }
+}
+func cookiesExist(r *http.Request, name string) bool {
+	cookies := r.Cookies()
+	for _, cookie := range cookies {
+		if cookie.Name == name {
+			return true
+		}
+	}
+	return false
+}
+// 將時間轉為區間段
+func toTimeInt(Time string) (string, error) {
+    layout := "15:04"
+    t, err := time.Parse(layout, Time)
+    if err != nil {
+        return "", err
+    }
+    TimeInSeconds := t.Hour()*3600 + t.Minute()*60 + t.Second()
+    Time2 := strconv.Itoa((TimeInSeconds / 300) + 1)
+    return Time2, nil
+}
+
 func (app *Application) CreateAccountView(w http.ResponseWriter, r *http.Request) {
 	showView(w, r, "createAccount.html", nil)
 }
-func (app *Application) HistoryListView(w http.ResponseWriter, r *http.Request) {
-	showView(w, r, "historyList.html", nil)
-}
 func (app *Application) IndexView(w http.ResponseWriter, r *http.Request) {
+	if cookiesExist(r, "now_userID") {
+		fmt.Printf("[使用者登出] %s\n", now_userID)
+	}
+	clearCookies(w, "now_userID", "now_offerID")
 	showView(w, r, "index.html", nil)
 }
+
 func (app *Application) MainPageView(w http.ResponseWriter, r *http.Request) {
 	showView(w, r, "mainPage.html", nil)
 }
@@ -58,18 +106,45 @@ func (app *Application) Request2View(w http.ResponseWriter, r *http.Request) {
 		MsgC2 string
 		MsgC3 string
 	}{
-		FlagA:true,
-		MsgA1:"100",
-		MsgA2:"100",
-		MsgA3:"100",
-		FlagB:true,
-		MsgB1:"90",
-		MsgB2:"50",
-		MsgB3:"70",
+		FlagA:false,
+		MsgA1:"",
+		MsgA2:"",
+		MsgA3:"",
+		FlagB:false,
+		MsgB1:"",
+		MsgB2:"",
+		MsgB3:"",
 		FlagC:false,
-		MsgC1:"-",
-		MsgC2:"-",
-		MsgC3:"-",
+		MsgC1:"",
+		MsgC2:"",
+		MsgC3:"",
+	}
+	if cookiesExist(r, "optionA") {
+		var optionA Option
+		cookie, _ := r.Cookie("optionA")
+		json.Unmarshal([]byte(cookie.Value), &optionA)
+		data.FlagA = true
+		data.MsgA1 = strconv.Itoa(optionA.MaxSoC)
+		data.MsgA2 = strconv.Itoa(optionA.Price)
+		data.MsgA3 = strconv.Itoa(optionA.Price)
+	}
+	if cookiesExist(r, "optionB") {
+		var optionB Option
+		cookie, _ := r.Cookie("optionB")
+		json.Unmarshal([]byte(cookie.Value), &optionB)
+		data.FlagB = true
+		data.MsgB1 = strconv.Itoa(optionB.MaxSoC)
+		data.MsgB2 = strconv.Itoa(optionB.Price)
+		data.MsgB3 = strconv.Itoa(optionB.Price)
+	}
+	if cookiesExist(r, "optionC") {
+		var optionC Option
+		cookie, _ := r.Cookie("optionC")
+		json.Unmarshal([]byte(cookie.Value), &optionC)
+		data.FlagC = true
+		data.MsgC1 = strconv.Itoa(optionC.MaxSoC)
+		data.MsgC2 = strconv.Itoa(optionC.Price)
+		data.MsgC3 = strconv.Itoa(optionC.Price)
 	}
 	showView(w, r, "request2.html", data)
 }
@@ -100,13 +175,26 @@ func (app *Application) TrackNoView(w http.ResponseWriter, r *http.Request) {
 func (app *Application) TrackYesView(w http.ResponseWriter, r *http.Request) {
 	showView(w, r, "trackYes.html", nil)
 }
+func (app *Application) TrackView(w http.ResponseWriter, r *http.Request) {
+	if cookiesExist(r, "now_offerID") {
+		app.TrackYesView(w, r)
+	} else {
+		app.TrackNoView(w, r)
+	}
+}
+func (app *Application) HistoryListView(w http.ResponseWriter, r *http.Request) {
+	showView(w, r, "historyList.html", nil)
+}
+
 var index int = 1
 func (app *Application) Schedule() {
+	// 設定每5分鐘執行
 	ticker := time.NewTicker(5 * time.Minute)
 	time.Sleep(5 * time.Minute)
 	for {
 		select {
 		case <-ticker.C:
+			// 顯示現在時間
 			fmt.Println("Current time:", time.Now())
 			// 將各個充電裝的功率上鏈
 			fmt.Printf("第%d區間上鍊開始\n",index)
@@ -133,15 +221,16 @@ func (app *Application) Register(w http.ResponseWriter, r *http.Request)  {
 	capacity := r.FormValue("capacity")
 	password := r.FormValue("password")
 
-	_ , err := app.Fabric.GetUserIDbyCarID(carID)	
-	
+	// 查看車牌是否已註冊過
+	_ , err := app.Fabric.GetUserIDbyCarID(carID)
 	if err == nil {
-		err = errors.New("Register ERROR! CarID already exist!")
+		err = errors.New("車牌曾經註冊!請登入!")
 	}else{
 		_, err = app.Fabric.Register(carID, userName, capacity, password)
 	}
 
 	if err != nil {
+		// 註冊失敗，要求重新輸入
 		data := &struct {
 			Flag bool
 			Msg string
@@ -153,14 +242,9 @@ func (app *Application) Register(w http.ResponseWriter, r *http.Request)  {
 		data.Msg = errMessage[1]
 		showView(w, r, "createAccount.html", data)
 	}else{
+		// 註冊成功則登入
 		now_userID, _ := app.Fabric.Login(carID, password)
-
-		cookie := http.Cookie{
-			Name:  "now_userID",
-			Value: now_userID,
-			Expires: time.Now().Add(3 * time.Hour),
-		}
-		http.SetCookie(w, &cookie)
+		setCookie(w, "now_userID", now_userID)
 		
 		fmt.Printf("[新使用者註冊並登入] %s\n", now_userID)
 		showView(w, r, "mainPage.html", nil)
@@ -174,6 +258,7 @@ func (app *Application) Login(w http.ResponseWriter, r *http.Request)  {
 	now_userID, err := app.Fabric.Login(carID, password)
 
 	if err != nil {
+		// 登入失敗，要求重新輸入
 		data := &struct {
 			Flag bool
 			Msg string
@@ -185,35 +270,27 @@ func (app *Application) Login(w http.ResponseWriter, r *http.Request)  {
 		data.Msg = errMessage[1]
 		showView(w, r, "index.html", data)
 	}else{
-		cookie := http.Cookie{
-			Name:  "now_userID",
-			Value: now_userID,
-			Expires: time.Now().Add(3 * time.Hour),
-		}
-		http.SetCookie(w, &cookie)
-
+		// 登入成功
+		setCookie(w, "now_userID", now_userID)
 		fmt.Printf("[使用者登入] %s\n", now_userID)
 		showView(w, r, "mainPage.html", nil)
 	}
 }
 
 func (app *Application) Offer(w http.ResponseWriter, r *http.Request)  {
+	// 將進場時間轉換為區間段
 	arrTime := r.FormValue("arrTime")
-	layout := "15:04"
-	t, err := time.Parse(layout, arrTime)
+	arrTime2, err := toTimeInt(arrTime)
 	if err != nil {
 		http.Error(w, "Invalid arrtime format", http.StatusBadRequest)
 	}
-	arrTimeInSeconds := t.Hour()*3600 + t.Minute()*60 + t.Second()
-	arrTime2 := strconv.Itoa((arrTimeInSeconds / 300) + 1)
 
+	// 將離場時間轉換為區間段
 	depTime := r.FormValue("depTime")
-	t, err = time.Parse(layout, depTime)
+	depTime2, err := toTimeInt(depTime)
 	if err != nil {
-		http.Error(w, "Invalid deptime format", http.StatusBadRequest)
+		http.Error(w, "Invalid depTime format", http.StatusBadRequest)
 	}
-	depTimeInSeconds := t.Hour()*3600 + t.Minute()*60 + t.Second()
-	depTime2 := strconv.Itoa((depTimeInSeconds / 300) + 1)
 
 	arrSoC := r.FormValue("arrSoC")
 	depSoC := r.FormValue("depSoC")
@@ -223,6 +300,7 @@ func (app *Application) Offer(w http.ResponseWriter, r *http.Request)  {
 	now_offerID, err := app.Fabric.Offer(arrTime2, depTime2, arrSoC, depSoC, acdc, now_userID)
 
 	if err != nil {
+		// 申請充電失敗
 		data := &struct {
 			Flag bool
 			Msg string
@@ -234,13 +312,20 @@ func (app *Application) Offer(w http.ResponseWriter, r *http.Request)  {
 		data.Msg = errMessage[1]
 		showView(w, r, "request1.html", data)
 	}else{
-		cookie := http.Cookie{
-			Name:  "now_offerID",
-			Value: now_offerID,
-			Expires: time.Now().Add(3 * time.Hour),
-		}
-		http.SetCookie(w, &cookie)
+		// 申請充電成功
+		setCookie(w, "now_offerID", now_offerID)
 		fmt.Printf("[發送新請求] %s: %s\n", now_userID, now_offerID)
+		
+		// 呼叫最佳化函式1
+		optionA := Option{StationID: "A", ChargerID: 1, MaxSoC: 100, Price: 100,}
+		optionB := Option{StationID: "B", ChargerID: 1, MaxSoC: 100, Price: 50,}
+		optionC := Option{StationID: "C", ChargerID: 1, MaxSoC: 100, Price: 30,}
+		optionAAsBytes, _ := json.Marshal(optionA)
+		optionBAsBytes, _ := json.Marshal(optionB)
+		optionCAsBytes, _ := json.Marshal(optionC)
+		setCookie(w, "optionA", optionAAsBytes)
+		setCookie(w, "optionB", optionBAsBytes)
+		setCookie(w, "optionC", optionCAsBytes)
 		app.Request2View(w,r)
 	}
 }

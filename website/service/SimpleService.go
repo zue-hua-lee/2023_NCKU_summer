@@ -16,14 +16,14 @@ func (t *ServiceSetup) Register(carID, userName, capacity, password string) (str
 	}
 	return string(respone.TransactionID), nil
 }
-func (t *ServiceSetup) ShowAllUser() (string, error){
-	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "showAllUser", Args: [][]byte{}}
-	respone, err := t.Client.Query(req)
-	if err != nil {
-			return "", err
-	}
-	return string(respone.Payload), nil
-}
+// func (t *ServiceSetup) ShowAllUser() (string, error){
+// 	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "showAllUser", Args: [][]byte{}}
+// 	respone, err := t.Client.Query(req)
+// 	if err != nil {
+// 			return "", err
+// 	}
+// 	return string(respone.Payload), nil
+// }
 
 func (t *ServiceSetup) Login(carID, password string) (string, error){
 	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "login", Args: [][]byte{[]byte(carID), []byte(password)}}
@@ -41,14 +41,14 @@ func (t *ServiceSetup) GetUserIDbyCarID(carID string) (string, error) {
 	}
 	return string(respone.Payload), nil
 }
-func (t *ServiceSetup) ShowUserbyID(userID string) (string, error){
-	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "showUserbyID", Args: [][]byte{[]byte(userID)}}
-	respone, err := t.Client.Query(req)
-	if err != nil {
-			return "", err
-	}
-	return string(respone.Payload), nil
-}
+// func (t *ServiceSetup) ShowUserbyID(userID string) (string, error){
+// 	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "showUserbyID", Args: [][]byte{[]byte(userID)}}
+// 	respone, err := t.Client.Query(req)
+// 	if err != nil {
+// 			return "", err
+// 	}
+// 	return string(respone.Payload), nil
+// }
 
 func (t *ServiceSetup) Offer(arrTime, depTime, arrSoC, depSoC, acdc, userID string) (string, error) {
 	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "offer", Args: [][]byte{[]byte(arrTime), []byte(depTime), []byte(arrSoC), []byte(depSoC), []byte(acdc), []byte(userID)}}
