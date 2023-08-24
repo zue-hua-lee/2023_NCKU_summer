@@ -14,6 +14,37 @@
     />
     <!--連css-->
     <link rel="stylesheet" href="../static/css/style.css" />
+    <!-- 圖表用 -->
+    <script
+      type="text/javascript"
+      src="https://www.gstatic.com/charts/loader.js"
+    ></script>
+    <script type="text/javascript">
+      google.charts.load("current", { packages: ["corechart"] });
+      google.charts.setOnLoadCallback(drawChart);
+
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+          ["時間", "電量"],
+          [{{.Time1}}, {{.Charge1}}],
+          [{{.Time2}}, {{.Charge2}}],
+          [{{.Time3}}, {{.Charge3}}],
+          [{{.Time4}}, {{.Charge4}}],//會隨時間增加資料量
+        ]);
+
+        var options = {
+          title: "目前充電狀態",
+          // curveType:"function",//線會變灣，先註解掉
+          legend: { position: "bottom" },
+        };
+
+        var chart = new google.visualization.LineChart(
+          document.getElementById("curve_chart")
+        );
+
+        chart.draw(data, options);
+      }
+    </script>
   </head>
   <body>
     <!--標題-->
@@ -40,6 +71,36 @@
       </ul>
     </nav>
     <!--主要內容-->
-    <main></main>
+    <main>
+      <div class="msg">
+        <div>
+          <table class="table1">
+            <!--這邊要補回傳值-->
+            <thead>
+              <tr>
+                <th>目前充電地點</th>
+                <th>充電樁號碼</th>
+                <th>充電樁種類</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{if .FlagA}}
+              <tr>
+                <td>{{.MsgA1}}</td>
+                <td>{{.MsgA2}}</td>
+                <td>{{.MsgA3}}</td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+        </div>
+        <!-- 圖表 -->
+        <div
+          id="curve_chart"
+          style="width: 900px; height: 500px"
+          class="chart1"
+        ></div>
+      </div>
+    </main>
   </body>
 </html>
