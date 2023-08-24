@@ -22,7 +22,7 @@
         <img
           width="3%"
           height="3%"
-          src="./pic/charger.png"
+          src="../static/img/charger.png"
           alt="logo"
         />電動車充電預約
       </h1>
@@ -31,14 +31,61 @@
     <!--導覽列-->
     <nav>
       <ul>
-        <li><a href="./index.html">使用說明</a></li>
+        <li><a href="./mainPage.html">使用說明</a></li>
         <li><a href="./request1.html">申請充電</a></li>
         <li><a href="/track">充電追蹤</a></li>
         <!--不確定如果沒充電要怎麼跳轉頁面-->
         <li><a href="#">歷史紀錄</a></li>
+        <li><a href="./index.html">登出</a></li>
       </ul>
     </nav>
     <!--主要內容-->
-    <main></main>
+    <main>
+      <div class="msg">
+        <table class="table1">
+          <!--這邊要補回傳值-->
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>開始充電時間</th>
+              <th>結束充電時間</th>
+              <th>總充電量）</th>
+              <th>總價</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{if .FlagA}}
+            <tr>
+              <td>{{.MsgA1}}</td>
+              <td>{{.MsgA2}}</td>
+              <td>{{.MsgA3}} </td>
+              <td>{{.MsgA4}} </td>
+              <td>{{.MsgA5}} </td>
+            </tr>
+            {{end}}
+  
+            {{if .FlagB}}
+            <tr>
+              <td>{{.MsgB1}}</td>
+              <td>{{.MsgB2}}</td>
+              <td>{{.MsgB3}}</td>
+              <td>{{.MsgB4}} </td>
+              <td>{{.MsgB5}} </td>
+            </tr>
+            {{end}}
+            
+            {{if .FlagC}}
+            <tr>
+              <td>{{.MsgC1}}</td>
+              <td>{{.MsgC2}}</td>
+              <td>{{.MsgC3}}</td>
+              <td>{{.MsgC4}} </td>
+              <td>{{.MsgC5}} </td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+    </main>
   </body>
 </html>
