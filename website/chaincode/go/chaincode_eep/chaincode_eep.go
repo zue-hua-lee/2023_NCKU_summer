@@ -34,6 +34,11 @@ type MyMatch struct {
     MatchID string             `json:"matchID"`
     OfferID string             `json:"offerID"`
 	StationID string           `json:"stationID"`
+	ChargerID int              `json:"chargerID"`
+	Date string                `json:"date"`
+    ArrTime int                `json:"arrTime"`
+    DepTime int                `json:"depTime"`
+    ArrSoC int             	   `json:"arrSoC"`
     MaxSoC int                 `json:"maxSoC"`
     Price int                  `json:"price"`
 }
@@ -45,6 +50,7 @@ type Power struct {
     State int                  `json:"state"`
     TimeStamp int              `json:"timeStamp"`
 }
+
 
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	fmt.Println("eep Invoke")
@@ -59,22 +65,26 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 		return t.login(stub, args)
     } else if function == "getUserIDbyCarID" {
         return t.getUserIDbyCarID(stub, args)
-	} else if function == "showUserbyID" {
-		return t.showUserbyID(stub, args)
+	} else if function == "ShowCarbyID" {
+		return t.ShowCarbyID(stub, args)
 	} else if function == "offer" {
 		return t.offer(stub, args)
 	} else if function == "showAllOffer" {
 		return t.showAllOffer(stub)
+	} else if function == "showOfferbyID" {
+		return t.showOfferbyID(stub, args)
 	} else if function == "match" {
 		return t.match(stub, args)
-	} else if function == "showAllMatch" {
-		return t.showAllMatch(stub)
+	} else if function == "showMatchbyUser" {
+		return t.showMatchbyUser(stub, args)
 	} else if function == "power" {
 		return t.power(stub, args)
 	} else if function == "showAllPower" {
 		return t.showAllPower(stub)
 	} else if function == "showPowerbyCharger" {
 		return t.showPowerbyCharger(stub, args)
+	} else if function == "showPowerbyMatch" {
+		return t.showPowerbyMatch(stub, args)
 	}
 	return shim.Error("Invalid invoke function name.")
 }
@@ -257,14 +267,14 @@ func (t *SimpleChaincode) getUserIDbyCarID(stub shim.ChaincodeStubInterface, arg
     }
 	return shim.Error("getUserIDbyCarID ERROR!")
 }
-func (t *SimpleChaincode) showUserbyID(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *SimpleChaincode) ShowCarbyID(stub shim.ChaincodeStubInterface, args []string) pb.Response {
     var err error
     var user MyUser
 	if len(args) != 1 {
 		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
     if args[0] == "" {
-		return shim.Error("尚無使用者登入!請先登入")
+		return shim.Error("尚無使用者登入!")
     }
     userID := args[0]
     
@@ -276,7 +286,7 @@ func (t *SimpleChaincode) showUserbyID(stub shim.ChaincodeStubInterface, args []
     if user.UserID != userID {
             return shim.Error("User does not exist - " + userID)
     }
-    return shim.Success(userAsBytes)
+    return shim.Success([]byte(user.CarID))
 }
 
 var offer_count int = 0
@@ -328,6 +338,27 @@ func (t *SimpleChaincode) offer(stub shim.ChaincodeStubInterface, args []string)
     }
     return shim.Success([]byte(offerID))
 }
+func (t *SimpleChaincode) showOfferbyID(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+    var err error
+    var offer MyOffer
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+    if args[0] == "" {
+		return shim.Error("尚無提出充電申請!")
+    }
+    offerID := args[0]
+    
+    offerAsBytes, err := stub.GetState(offerID)
+    if err != nil {
+            return shim.Error("Failed to find offer - " + offerID)
+    }
+    json.Unmarshal(offerAsBytes, &offer)
+    if offer.OfferID != offerID {
+            return shim.Error("Offer does not exist - " + offerID)
+    }
+    return shim.Success(offerAsBytes)
+}
 func (t *SimpleChaincode) showAllOffer(stub shim.ChaincodeStubInterface) pb.Response {
     type myAlloffer struct {
         Offers []MyOffer `json:"offers"`
@@ -360,8 +391,8 @@ func (t *SimpleChaincode) showAllOffer(stub shim.ChaincodeStubInterface) pb.Resp
 var match_count int = 0
 func (t *SimpleChaincode) match(stub shim.ChaincodeStubInterface, args []string) pb.Response {
     var err error
-	if len(args) != 4 {
-		return shim.Error("Incorrect number of arguments. Expecting 4")
+	if len(args) != 9 {
+		return shim.Error("Incorrect number of arguments. Expecting 9")
 	}
 
     var match MyMatch
@@ -369,33 +400,61 @@ func (t *SimpleChaincode) match(stub shim.ChaincodeStubInterface, args []string)
         return shim.Error("充電站格式錯誤!")
     }
     match.StationID = args[0]
-    checkmaxSoC, err := strconv.Atoi(args[1])
+    checkchargerID, err := strconv.Atoi(args[1])
+    if err != nil || checkchargerID < 1 || checkchargerID > 30 {
+        return shim.Error("充電樁格式錯誤!")
+    }
+    match.ChargerID = checkchargerID
+    match.Date = args[2]
+    checkarrtime, err := strconv.Atoi(args[3])
+    if err != nil || checkarrtime < 1 || checkarrtime > 288{
+        return shim.Error("開始充電時間格式錯誤！")
+    }
+    match.ArrTime = checkarrtime
+    checkdeptime, err := strconv.Atoi(args[4])
+    if err != nil || checkdeptime < 1 || checkdeptime > 288 || checkdeptime <= match.ArrTime {
+        return shim.Error("結束充電時間格式錯誤！")
+    }
+    match.DepTime = checkdeptime
+    checkarrSoC, err := strconv.Atoi(args[5])
+    if err != nil || checkarrSoC < 0 || checkarrSoC > 100{
+        return shim.Error("進場電量格式錯誤!")
+    }
+    match.ArrSoC = checkarrSoC
+    checkmaxSoC, err := strconv.Atoi(args[6])
     if err != nil || checkmaxSoC < 0 || checkmaxSoC > 100 {
-        return shim.Error("最高可充電池狀態格式錯誤!")
+        return shim.Error("離場電量格式錯誤!")
     }
     match.MaxSoC = checkmaxSoC
-    checkprice, err := strconv.Atoi(args[2])
+    checkprice, err := strconv.Atoi(args[7])
     if err != nil || checkprice < 0 {
         return shim.Error("電價格式錯誤!")
     }
     match.Price = checkprice
-    if args[3] == "" {
+    if args[8] == "" {
 		return shim.Error("尚未提出充電申請!")
     }
-    match.OfferID = args[3]
+    match.OfferID = args[8]
     matchID := "match" + strconv.Itoa(match_count)
     match.MatchID = matchID
     match_count++
 
     MatchAsBytes, _ := json.Marshal(match)
     err = stub.PutState(matchID, MatchAsBytes)
-
 	if err != nil {
 		return shim.Error(err.Error())
     }
-    return shim.Success(nil)
+    return shim.Success([]byte(matchID))
 }
-func (t *SimpleChaincode) showAllMatch(stub shim.ChaincodeStubInterface) pb.Response {
+func (t *SimpleChaincode) showMatchbyUser(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+    if args[0] == "" {
+		return shim.Error("尚無使用者登入!")
+    }
+    userID := args[0]
+
     type myAllmatch struct {
         Matchs []MyMatch `json:"matchs"`
     }
@@ -404,23 +463,39 @@ func (t *SimpleChaincode) showAllMatch(stub shim.ChaincodeStubInterface) pb.Resp
 
     matchIterator, err := stub.GetStateByRange("match0", "match999999999")
     if err != nil {
-		return shim.Error(err.Error())
+        return shim.Error(err.Error())
     }
     defer matchIterator.Close()
 
+    if !matchIterator.HasNext() {
+        return shim.Error("No matches found")
+    }
+
     for matchIterator.HasNext() {
         data, err := matchIterator.Next()
-		if err != nil {
-		    return shim.Error(err.Error())
-		}
-		ValAsBytes := data.Value
+        if err != nil {
+            return shim.Error(err.Error())
+        }
+        ValAsBytes := data.Value
 
         var match MyMatch
         json.Unmarshal(ValAsBytes, &match)
-		allmatch.Matchs = append(allmatch.Matchs, match)
+
+        var offer MyOffer
+        offerAsBytes, err := stub.GetState(match.OfferID)
+        if err != nil {
+                return shim.Error("Failed to find offer - " + match.OfferID)
+        }
+        json.Unmarshal(offerAsBytes, &offer)
+        if offer.OfferID != match.OfferID {
+                return shim.Error("Offer does not exist - " + match.OfferID)
+        }
+        if offer.UserID == userID{
+            allmatch.Matchs = append(allmatch.Matchs, match)
+        }
     }
-	allmatchAsBytes, _ := json.Marshal(allmatch)
-	return shim.Success(allmatchAsBytes)
+    allmatchAsBytes, _ := json.Marshal(allmatch)
+    return shim.Success(allmatchAsBytes)
 }
 
 var power_count int = 0
@@ -450,7 +525,7 @@ func (t *SimpleChaincode) power(stub shim.ChaincodeStubInterface, args []string)
             return shim.Error("充電功率格式錯誤!")
         }
         power.Power = p.Power
-        if !(p.State == 0 || p.State == 1) {
+        if p.State != -1 && (p.State < 0 || p.State > 100) {
             return shim.Error("配對狀態格式錯誤!")
         }
         power.State = p.State
@@ -533,6 +608,65 @@ func (t *SimpleChaincode) showPowerbyCharger(stub shim.ChaincodeStubInterface, a
     }
     return shim.Error("No data for chargerID: " + stationID + strconv.Itoa(chargerID))
 }
+
+func (t *SimpleChaincode) showPowerbyMatch(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+    if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+
+    var match MyMatch
+    if args[0] == "" {
+        return shim.Error("尚無提出充電配對!")
+    }
+    matchID := args[0]
+    
+    matchAsBytes, err := stub.GetState(matchID)
+    if err != nil {
+        return shim.Error("Failed to find match - " + matchID)
+    }
+    json.Unmarshal(matchAsBytes, &match)
+    if match.MatchID != matchID {
+        return shim.Error("Match does not exist - " + matchID)
+    }
+
+    var offer MyOffer
+    offerAsBytes, err := stub.GetState(match.OfferID)
+    if err != nil {
+        return shim.Error("Failed to find offer - " + match.OfferID)
+    }
+    json.Unmarshal(offerAsBytes, &offer)
+    if offer.OfferID != match.OfferID {
+        return shim.Error("Offer does not exist - " + match.OfferID)
+    }
+
+    type myAllpower struct {
+        Powers []Power `json:"powers"`
+    }
+    var allpower myAllpower
+    
+    powerIterator, err := stub.GetStateByRange("power0", "power999999999")
+    if err != nil {
+		return shim.Error(err.Error())
+    }
+    defer powerIterator.Close()
+
+    for powerIterator.HasNext() {
+        data, err := powerIterator.Next()
+		if err != nil {
+		    return shim.Error(err.Error())
+		}
+		ValAsBytes := data.Value
+
+        var power Power
+        json.Unmarshal(ValAsBytes, &power)
+        if power.StationID == match.StationID && power.ChargerID == match.ChargerID && power.TimeStamp >= offer.ArrTime && power.TimeStamp < offer.DepTime {
+            allpower.Powers = append(allpower.Powers, power)
+        }
+    }
+    allpowerAsBytes, _ := json.Marshal(allpower)
+	return shim.Success(allpowerAsBytes)
+}
+
 
 func main() {
 	err := shim.Start(new(SimpleChaincode))

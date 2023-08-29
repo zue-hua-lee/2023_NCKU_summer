@@ -15,7 +15,7 @@ func  WebStart(app *controller.Application) {
 	// 讀取新充電請求(csv)按時間排序存到陣列中
 	offers := app.LoadAllOffer()
 	var num int = 0
-	for i := 1; i <= 5; i++ {
+	for i := 1; i <= 288; i++ {
 		for ; num < len(offers) && offers[num].ArrTime == i; num++ {
 			// 新充電申請上鏈
 			fmt.Printf("time: %d, num: %d, EV: %d\n", i, num, offers[num].CarNum)
@@ -23,7 +23,7 @@ func  WebStart(app *controller.Application) {
 
 			// 呼叫最佳化函式1 (先慢1後快2) 
 			// 輸入參數: 新車資訊、時段
-			// 回傳參數: 每個廠回傳充電樁編號、承諾SoC、單價
+			// 回傳參數: 每個廠回傳充電樁編號、承諾SoC、單價、佔位價
 			optionA := controller.Option{StationID: "A", ChargerID: 1, MaxSoC: 100, Price: 100,}
 			optionB := controller.Option{StationID: "B", ChargerID: 1, MaxSoC: 100, Price: 50,}
 			optionC := controller.Option{StationID: "C", ChargerID: 1, MaxSoC: 100, Price: 30,}
@@ -31,7 +31,7 @@ func  WebStart(app *controller.Application) {
 
 			// 媒合階段
 			// 呼叫函式2
-			// 輸入參數: 車子編號、選擇的充電站的樁位
+			// 輸入參數: (1/-1)
 			// 回傳參數:
 
 			option := app.ChooseOption(options)
