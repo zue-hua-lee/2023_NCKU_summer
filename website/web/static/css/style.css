@@ -107,6 +107,8 @@ table {
   /*------修改成border-bottom-----*/
   border-bottom: 3px solid #81968f;
   border-collapse: collapse;
+  text-align: center;
+  vertical-align: middle;
 }
 
 .table1 th,
@@ -125,6 +127,8 @@ table {
   /*------修改成border-bottom-----*/
   border-bottom: 3px solid #81968f;
   border-collapse: collapse;
+  text-align: center;
+  vertical-align: middle;
 }
 
 .table2 th,

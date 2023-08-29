@@ -211,7 +211,7 @@ func (app *Application) Schedule() {
 		case <-ticker.C:
 			// 顯示現在時間
 			fmt.Println("Current time:", time.Now())
-			// 將各個充電裝的功率上鏈
+			// 將各個充電樁的功率上鏈
 			fmt.Printf("第%d區間上鍊開始\n",index)
 			var powers []Power
 			for j := 1; j <= 12; j++{
