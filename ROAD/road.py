@@ -42,7 +42,7 @@ class power:
         self.ev_ID = -1
         self.ev_soc = 0
         
-class load:  #沒有新車加入
+class road:  #沒有新車加入
     def __init__(self, now_time: int, new_ev: int):
         
         self.now_time = now_time        #現在時間
@@ -101,7 +101,7 @@ class load:  #沒有新車加入
                         self.se_list[int(row[7])-1].index_in_evlist = len(self.ev_list)-1
                         self.se_list[int(row[7])-1].time_in = int(row[1])
                         self.se_list[int(row[7])-1].time_out = int(row[2])
-                    elif(int(row[2]) <= self.now_time): #離場時間於現在時間才加進車列中
+                    elif(int(row[2]) <= self.now_time): #離場時間小於現在時間踢出車列
                         try:
                             with open('dep_ev.csv', 'a', newline='') as csvfile:
                                 writer = csv.writer(csvfile)
@@ -314,8 +314,8 @@ class load:  #沒有新車加入
             print("Gurobi 錯誤:", e)
             
         
-class load_new_ev: #有新車加入
-    def __init__(self, now_time: int, name: int, time_in: int, time_out: int, soc_in: float, soc_out: float, capcity: int, char_type: int, location_x: float, 
+class road_new_ev: #有新車加入
+    def __init__(self, now_time: int, name: int, time_in: int, time_out: int, soc_in: float, soc_out: float, capacity: int, char_type: int, location_x: float, 
                location_y: float):
         
         self.now_time = now_time        #現在時間
@@ -330,12 +330,12 @@ class load_new_ev: #有新車加入
         self.pnet = [0]*(self.num_time)          #淨負載
         self.pnet_plus = [0]*(self.num_time)     #正淨負載
         self.get_FCS_info()
-        if(self.check(name, time_in, time_out, soc_in, soc_out, capcity, char_type, location_x, location_y) == 0):  #檢查新車是否到的了本場
+        if(self.check(name, time_in, time_out, soc_in, soc_out, capacity, char_type, location_x, location_y) == 0):  #檢查新車是否到的了本場
             return
         
-    def check(self, name, time_in, time_out, soc_in, soc_out, capcity, char_type, location_x, location_y):
+    def check(self, name, time_in, time_out, soc_in, soc_out, capacity, char_type, location_x, location_y):
         distance = math.sqrt((self.location_x - location_x)**2 + (self.location_y - location_y)**2)
-        remainder = soc_in * capcity #電動車剩餘電量
+        remainder = soc_in * capacity #電動車剩餘電量
         if(remainder*0.5 < distance):
             print('電動車剩餘電量無法到達此場')
             return 0
@@ -350,7 +350,7 @@ class load_new_ev: #有新車加入
                 print('充電廠內沒有空位的充電樁')
                 return 0
             else:
-                add_ev = ev(name, time_in, time_out, soc_in, soc_out, soc_in, capcity, num_se)
+                add_ev = ev(name, time_in, time_out, soc_in, soc_out, soc_in, capacity, num_se)
                 self.ev_list.append(add_ev)
                 self.ev_list[len(self.ev_list)-1].charge = (self.ev_list[len(self.ev_list)-1].soc_out - self.ev_list[len(self.ev_list)-1].soc_in) * self.ev_list[len(self.ev_list)-1].capacity
                 self.se_list[num_se-1].index_in_evlist = len(self.ev_list)-1
@@ -517,8 +517,6 @@ class load_new_ev: #有新車加入
 #myfcs = load_new_ev(87,2,87,193,29,86,100,2,7.1,1.3)
 #unit_price_of_ch, total_price_of_space, total_charge = myfcs.schedule()
                 
-myfcs_1 = load(87,1)
-se_char, ev_list = myfcs_1.schedule()
 
 
 
