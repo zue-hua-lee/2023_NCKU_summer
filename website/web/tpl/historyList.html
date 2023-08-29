@@ -32,11 +32,11 @@
     <nav>
       <ul>
         <li><a href="./mainPage.html">使用說明</a></li>
-        <li><a href="./request1.html">申請充電</a></li>
-        <li><a href="/track">充電追蹤</a></li>
+        <li><a href="./requestView">申請充電</a></li>
+        <li><a href="/trackView">充電追蹤</a></li>
         <!--不確定如果沒充電要怎麼跳轉頁面-->
         <li><a href="#">歷史紀錄</a></li>
-        <li><a href="./index.html">登出</a></li>
+        <li><a href="./login.html">登出</a></li>
       </ul>
     </nav>
     <!--主要內容-->
@@ -49,38 +49,18 @@
               <th>日期</th>
               <th>開始充電時間</th>
               <th>結束充電時間</th>
-              <th>總充電量</th>
+              <th>總充電量（%）</th>
               <th>總價</th>
             </tr>
           </thead>
           <tbody>
-            {{if .FlagA}}
+            {{range .}}
             <tr>
-              <td>{{.MsgA1}}</td>
-              <td>{{.MsgA2}}</td>
-              <td>{{.MsgA3}} </td>
-              <td>{{.MsgA4}} </td>
-              <td>{{.MsgA5}} </td>
-            </tr>
-            {{end}}
-  
-            {{if .FlagB}}
-            <tr>
-              <td>{{.MsgB1}}</td>
-              <td>{{.MsgB2}}</td>
-              <td>{{.MsgB3}}</td>
-              <td>{{.MsgB4}} </td>
-              <td>{{.MsgB5}} </td>
-            </tr>
-            {{end}}
-            
-            {{if .FlagC}}
-            <tr>
-              <td>{{.MsgC1}}</td>
-              <td>{{.MsgC2}}</td>
-              <td>{{.MsgC3}}</td>
-              <td>{{.MsgC4}} </td>
-              <td>{{.MsgC5}} </td>
+              <td>{{.Msg1}}</td>
+              <td>{{.Msg2}}</td>
+              <td>{{.Msg3}} </td>
+              <td>{{.Msg4}} </td>
+              <td>{{.Msg5}} </td>
             </tr>
             {{end}}
           </tbody>

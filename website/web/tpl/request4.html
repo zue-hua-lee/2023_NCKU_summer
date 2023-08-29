@@ -32,11 +32,11 @@
     <nav>
       <ul>
         <li><a href="./mainPage.html">使用說明</a></li>
-        <li><a href="./request1.html">申請充電</a></li>
-        <li><a href="/track">充電追蹤</a></li>
+        <li><a href="./requestView">申請充電</a></li>
+        <li><a href="/trackView">充電追蹤</a></li>
         <!--不確定如果沒充電要怎麼跳轉頁面-->
-        <li><a href="/history">歷史紀錄</a></li>
-        <li><a href="./index.html">登出</a></li>
+        <li><a href="/historyView">歷史紀錄</a></li>
+        <li><a href="./login.html">登出</a></li>
       </ul>
     </nav>
     <!--主要內容-->
@@ -56,29 +56,33 @@
           <thead>
             <tr>
               <th>充電地點</th>
-              <th>{{.Msg1}}</th>
+              <th>{{.StationID}}</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>充電樁號碼</td>
-              <td>{{.Msg2}}</td>
+              <td>{{.ChargerID}}</td>
             </tr>
             <tr>
               <td>充電樁種類</td>
-              <td>{{.Msg3}}</td>
+              <td>{{.Acdc}}</td>
             </tr>
             <tr>
               <td>開始充電時間</td>
-              <td>{{.Msg4}}</td>
+              <td>{{.ArrTime}}</td>
             </tr>
             <tr>
               <td>結束充電時間</td>
-              <td>{{.Msg5}}</td>
+              <td>{{.DepTime}}</td>
             </tr>
             <tr>
               <td>預估總充電量（%）</td>
-              <td>{{.Msg6}}</td>
+              <td>{{.MaxSoC}}</td>
+            </tr>
+            <tr>
+              <td>充電單價</td>
+              <td>{{.Price}}</td>
             </tr>
           </tbody>
         </table>

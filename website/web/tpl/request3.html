@@ -48,35 +48,39 @@
           <thead>
             <tr>
               <th>充電地點</th>
-              <th>{{.Msg1}}</th>
+              <th>{{.StationID}}</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>充電樁號碼</td>
-              <td>{{.Msg2}}</td>
+              <td>{{.ChargerID}}</td>
             </tr>
             <tr>
               <td>充電樁種類</td>
-              <td>{{.Msg3}}</td>
+              <td>{{.Acdc}}</td>
             </tr>
             <tr>
               <td>開始充電時間</td>
-              <td>{{.Msg4}}</td>
+              <td>{{.ArrTime}}</td>
             </tr>
             <tr>
               <td>結束充電時間</td>
-              <td>{{.Msg5}}</td>
+              <td>{{.DepTime}}</td>
             </tr>
             <tr>
               <td>預估總充電量（%）</td>
-              <td>{{.Msg6}}</td>
+              <td>{{.MaxSoC}}</td>
+            </tr>
+            <tr>
+              <td>充電單價</td>
+              <td>{{.Price}}</td>
             </tr>
           </tbody>
         </table>
         <br />
-        <a class="bt1" href="request4.html">確認送出</a>
-        <a class="bt1" href="request2.html">變更地點</a>
+        <a class="bt1" href="/match">確認送出</a>
+        <a class="bt1" href="/request2.html">變更地點</a>
       </div>
     </main>
   </body>
