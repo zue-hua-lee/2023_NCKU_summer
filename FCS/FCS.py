@@ -120,7 +120,7 @@ class fcs:  #沒有新車加入
                         self.se_list[int(row[7])-1].index_in_evlist = len(self.ev_list)-1
                         self.se_list[int(row[7])-1].time_in = int(row[1])
                         self.se_list[int(row[7])-1].time_out = int(row[2])
-                    elif(int(row[2]) <= self.now_time): #離場時間於現在時間才加進車列中
+                    elif(int(row[2]) <= self.now_time): #離場時間小於現在時間踢出車列
                         try:
                             with open('dep_ev.csv', 'a', newline='') as csvfile:
                                 writer = csv.writer(csvfile)
