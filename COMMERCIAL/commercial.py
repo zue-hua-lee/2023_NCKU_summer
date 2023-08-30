@@ -233,16 +233,12 @@ class com:  #沒有新車加入
                 m.addConstr(ess_char[t] - ess_char_bool[t] * Pess <= 0)
                 m.addConstr(ess_dischar[t] - ess_dischar_bool[t] * Pess <= 0)
 
-                temp_charge += ess_char[t] * efficiency - ess_dischar[t]
+                temp_charge += ess_char[t] * efficiency / 12 - ess_dischar[t] / 12
 
-                if(t-1 < 0):
-                    m.addConstr(0.5 * ess_cap + temp_charge >= ess_cap * 0.1)
-                    m.addConstr(0.5 * ess_cap + temp_charge <= ess_cap * 0.9)
-                else:
-                    m.addConstr(self.ess[t-1] * ess_cap + temp_charge >= ess_cap * 0.1)
-                    m.addConstr(self.ess[t-1] * ess_cap + temp_charge <= ess_cap * 0.9)
-            ess_charge = (self.ess_init - self.ess[num_time-1]) * ess_cap #初始值要等於最後值
-            m.addConstr(ess_charge - temp_charge <= ess_cost)
+                m.addConstr(0.5 * ess_cap + temp_charge >= ess_cap * 0.1)
+                m.addConstr(0.5 * ess_cap + temp_charge <= ess_cap * 0.9)
+
+            m.addConstr(0 - temp_charge <= ess_cost) #初始值要等於最後值
             ess_penalty = ess_cost * 50
 
 
@@ -359,12 +355,19 @@ class com:  #沒有新車加入
         #     # print("\n")
 
             #5.取得ess並寫入
-            x_ess = [[0]*2 for _ in range(num_time)]
+            x_ess = [[0]*4 for _ in range(num_time)]
             for t in range(now_time-1, num_time):
-                self.ess[t] = self.ess[t-1] + (ess_char[t].x*efficiency - ess_dischar[t].x)/12/self.ess_cap   
+                if(t == 0):
+                    self.ess[t] = 0.5 + (ess_char[t].x*efficiency - ess_dischar[t].x)/12/self.ess_cap
+                else:
+                    self.ess[t] = self.ess[t-1] + (ess_char[t].x*efficiency - ess_dischar[t].x)/12/self.ess_cap   
             for t in range(num_time):
                 x_ess[t][0] = t+1
-                x_ess[t][1] = self.ess[t]
+                x_ess[t][1] = round(self.ess[t],2)
+                if(t >= now_time-1):
+                    x_ess[t][2] = ess_char[t].x*efficiency/12/ess_cap
+                    x_ess[t][3] = ess_dischar[t].x/12/ess_cap
+
             with open('ess.csv', mode='w', newline='') as file:
                 writer = csv.writer(file)
                 header = ["time","ess"]
@@ -601,16 +604,12 @@ class com_new_ev: #有新車加入
                 m.addConstr(ess_char[t] - ess_char_bool[t] * Pess <= 0)
                 m.addConstr(ess_dischar[t] - ess_dischar_bool[t] * Pess <= 0)
 
-                temp_charge += ess_char[t] * efficiency - ess_dischar[t]
+                temp_charge += ess_char[t] * efficiency / 12 - ess_dischar[t] /12
 
-                if(t-1 < 0):
-                    m.addConstr(0.5 * ess_cap + temp_charge >= ess_cap * 0.1)
-                    m.addConstr(0.5 * ess_cap + temp_charge <= ess_cap * 0.9)
-                else:
-                    m.addConstr(self.ess[t-1] * ess_cap + temp_charge >= ess_cap * 0.1)
-                    m.addConstr(self.ess[t-1] * ess_cap + temp_charge <= ess_cap * 0.9)
-            ess_charge = (self.ess_init - self.ess[num_time-1]) * ess_cap #初始值要等於最後值
-            m.addConstr(ess_charge - temp_charge <= ess_cost)
+                m.addConstr(0.5 * ess_cap + temp_charge >= ess_cap * 0.1)
+                m.addConstr(0.5 * ess_cap + temp_charge <= ess_cap * 0.9)
+                
+            m.addConstr(0 - temp_charge <= ess_cost) #初始值要等於最後值
             ess_penalty = ess_cost * 50
 
 
@@ -670,9 +669,9 @@ class com_new_ev: #有新車加入
                             x_se_char[t] = se_char[t][ev_list[len(ev_list)-1].num_se-1].x
 
             if(self.ev_list[len(ev_list)-1].num_se <= self.ac_num_charge):
-                unit_price_of_ch, total_price_of_space = estimate_price(x_Pnet, x_se_char, tou, 1, ev_list[len(ev_list)-1].time_in, ev_list[len(ev_list)-1].time_out, Ptr)
+                unit_price_of_ch, total_price_of_space, total_price = estimate_price(x_Pnet, x_se_char, tou, 1, ev_list[len(ev_list)-1].time_in, ev_list[len(ev_list)-1].time_out, self.efficiency, Ptr)
             else:    
-                unit_price_of_ch, total_price_of_space = estimate_price(x_Pnet, x_se_char, tou, 2, ev_list[len(ev_list)-1].time_in, ev_list[len(ev_list)-1].time_out, Ptr)
+                unit_price_of_ch, total_price_of_space, total_price = estimate_price(x_Pnet, x_se_char, tou, 2, ev_list[len(ev_list)-1].time_in, ev_list[len(ev_list)-1].time_out, self.efficiency, Ptr)
             with open('new_ev.csv', 'w', newline='') as csvfile:
                 new_ev = [0]*8
                 csv_writer = csv.writer(csvfile)
@@ -687,7 +686,7 @@ class com_new_ev: #有新車加入
                 csv_writer.writerow(new_ev)
                 
             final_soc = int(self.ev_list[len(ev_list)-1].soc_in + total_charge/self.ev_list[len(ev_list)-1].capacity*100)
-            return self.ev_list[len(ev_list)-1].num_se, final_soc,int(unit_price_of_ch), int(total_price_of_space)
+            return self.ev_list[len(ev_list)-1].num_se, final_soc, unit_price_of_ch, total_price_of_space, total_price
         
         except gp. GurobiError as e:
             print ('Error code ' + str(e. errno ) + ": " + str(e))
