@@ -158,7 +158,7 @@ func (app *Application) MainPageView(w http.ResponseWriter, r *http.Request) {
 	data.NowCarID, _ = app.Fabric.ShowCarbyUser(now_userID)
 	showView(w, r, "mainPage.html", data)
 }
-func (app *Application) RequestView(w http.ResponseWriter, r *http.Request) {
+func (app *Application) RequestView(w http.ResponseWriter, r *http.Reques裝) {
 	if cookiesExist(r, "now_offerID") {
 		app.Request4View(w, r)
 	} else {
