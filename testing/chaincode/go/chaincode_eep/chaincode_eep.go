@@ -28,7 +28,9 @@ type Match struct {
 	StationID string           `json:"stationID"`
 	ChargerID int              `json:"chargerID"`
     MaxSoC int                 `json:"maxSoC"`
-    Price int                  `json:"price"`
+    TolPrice int               `json:"perPrice"`
+    PerPrice int               `json:"perPrice"`
+    ParkPrice int              `json:"parkPrice"`
 }
 type Power struct {
 	PowerID string             `json:"powerID"`
@@ -198,8 +200,8 @@ func (t *SimpleChaincode) showAllOffer(stub shim.ChaincodeStubInterface) pb.Resp
 var match_count int = 0
 func (t *SimpleChaincode) match(stub shim.ChaincodeStubInterface, args []string) pb.Response {
     var err error
-	if len(args) != 5 {
-		return shim.Error("Incorrect number of arguments. Expecting 5")
+	if len(args) != 7 {
+		return shim.Error("Incorrect number of arguments. Expecting 7")
 	}
 
     var match Match
@@ -217,15 +219,25 @@ func (t *SimpleChaincode) match(stub shim.ChaincodeStubInterface, args []string)
         return shim.Error("最高可充電池狀態格式錯誤!")
     }
     match.MaxSoC = checkmaxSoC
-    checkprice, err := strconv.Atoi(args[3])
-    if err != nil || checkprice < 0 {
-        return shim.Error("電價格式錯誤!")
+    checkpreprice, err := strconv.Atoi(args[3])
+    if err != nil || checkpreprice < 0 {
+        return shim.Error("單位電價格式錯誤!")
     }
-    match.Price = checkprice
-    if args[4] == "" {
+    match.PerPrice = checkpreprice
+    checkparkprice, err := strconv.Atoi(args[4])
+    if err != nil || checkparkprice < 0 {
+        return shim.Error("佔位電價格式錯誤!")
+    }
+    match.ParkPrice = checkparkprice
+    checktolprice, err := strconv.Atoi(args[5])
+    if err != nil || checktolprice < 0 {
+        return shim.Error("總電價格式錯誤!")
+    }
+    match.TolPrice = checktolprice
+    if args[6] == "" {
 		return shim.Error("尚未提出充電申請!")
     }
-    match.OfferID = args[4]
+    match.OfferID = args[6]
     matchID := "match" + strconv.Itoa(match_count)
     match.MatchID = matchID
     match_count++

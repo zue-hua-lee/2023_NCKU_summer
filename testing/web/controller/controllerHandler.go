@@ -39,7 +39,9 @@ type Option struct {
 	StationID string           `json:"stationID"`
 	ChargerID int              `json:"chargerID"`
     MaxSoC int                 `json:"maxSoC"`
-    Price int                  `json:"price"`
+    TolPrice int               `json:"perPrice"`
+    PerPrice int               `json:"perPrice"`
+    ParkPrice int              `json:"parkPrice"`
 }
 type Power struct {
 	StationID string           `json:"stationID"`
@@ -144,13 +146,13 @@ func (app *Application) ChooseOption(options []Option) Option {
 	rand.Seed(time.Now().UnixNano())
 	totalInverse := 0.0
 	for _, opt := range options {
-		totalInverse += 1.0 / float64(opt.Price)
+		totalInverse += 1.0 / float64(opt.TolPrice)
 	}
 	randomValue := rand.Float64() * totalInverse
 
 	currentValue := 0.0
 	for _, opt := range options {
-		currentValue += 1.0 / float64(opt.Price)
+		currentValue += 1.0 / float64(opt.TolPrice)
 		if randomValue <= currentValue {
 			return opt
 		}
@@ -180,7 +182,7 @@ func (app *Application) ShowAllOffer()  {
 }
 
 func (app *Application) SetMatch(option Option)  {
-	_, err := app.Fabric.Match(option.StationID, strconv.Itoa(option.ChargerID), strconv.Itoa(option.MaxSoC), strconv.Itoa(option.Price), now_offerID)
+	_, err := app.Fabric.Match(option.StationID, strconv.Itoa(option.ChargerID), strconv.Itoa(option.MaxSoC), strconv.Itoa(option.PerPrice), strconv.Itoa(option.ParkPrice), strconv.Itoa(option.TolPrice), now_offerID)
 	if err != nil {
 		log.Fatalln(err)
 	}
