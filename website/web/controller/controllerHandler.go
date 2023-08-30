@@ -172,7 +172,7 @@ func (app *Application) MainPageView(w http.ResponseWriter, r *http.Request) {
 	data.NowCarID, _ = app.Fabric.ShowCarbyID(now_userID)
 	showView(w, r, "mainPage.html", data)
 }
-func (app *Application) RequestView(w http.ResponseWriter, r *http.Request) {
+func (app *Application) RequestView(w http.ResponseWriter, r *http.Reques裝) {
 	if cookiesExist(r, "now_offerID") {
 		app.Request4View(w, r)
 	} else {
@@ -310,6 +310,33 @@ func (app *Application) TrackYesView(w http.ResponseWriter, r *http.Request) {
 	offerAsBytes, _ := app.Fabric.ShowOfferbyID(now_offerID)
 	json.Unmarshal([]byte(offerAsBytes), &offer)
 
+<<<<<<< HEAD
+var index int = 1
+func (app *Application) Schedule() {
+	// 設定每5分鐘執行
+	ticker := time.NewTicker(5 * time.Minute)
+	time.Sleep(5 * time.Minute)
+	for {
+		select {
+		case <-ticker.C:
+			// 顯示現在時間
+			fmt.Println("Current time:", time.Now())
+			// 將各個充電樁的功率上鏈
+			fmt.Printf("第%d區間上鍊開始\n",index)
+			var powers []Power
+			for j := 1; j <= 12; j++{
+				powers = append(powers, Power{StationID: "A", ChargerID: j, Power: 0, State: 0, TimeStamp: index})
+			}
+			for j := 1; j <= 6; j++{
+				powers = append(powers, Power{StationID: "B", ChargerID: j, Power: 30, State: 1, TimeStamp: index})
+			}
+			for j := 1; j <= 20; j++{
+				powers = append(powers, Power{StationID: "C", ChargerID: j, Power: 40, State: 1, TimeStamp: index})
+			}
+			app.Power(powers)
+			fmt.Printf("第%d區間上鍊結束\n",index)
+			index++
+=======
 	var option Option
 	getDataFromCookies(r, "choice", &option)
 
@@ -370,6 +397,7 @@ func (app *Application) TrackYesView(w http.ResponseWriter, r *http.Request) {
 		TimeChargeArray []struct {
 			Time   string
 			Charge int
+>>>>>>> 2a1fad4c8c01e2b3ab234e7c0bd510265ea88d5b
 		}
 	}{
 		Msg1: "",
