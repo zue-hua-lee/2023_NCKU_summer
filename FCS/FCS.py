@@ -48,7 +48,7 @@ class fcs:  #沒有新車加入
         self.cost = 0.0                 #購電電費
        
         self.ev_list = []                       #場內電動車
-        self.ess = [0]*(self.num_time)          #每時段儲能電量
+        self.ess = [0.0]*(self.num_time)          #每時段儲能電量
         self.ess_init = 0.5                     #儲能初始值定為0.5
         self.se_list = []                       #場內充電樁
         self.pnet = [0]*(self.num_time)         #淨負載
@@ -224,14 +224,11 @@ class fcs:  #沒有新車加入
                 m.addConstr(ess_char[t] - ess_char_bool[t] * Pess <= 0)
                 m.addConstr(ess_dischar[t] - ess_dischar_bool[t] * Pess <= 0)
 
-                temp_charge += ess_char[t] * efficiency / 12 - ess_dischar[t] / 12
+                temp_charge = temp_charge + ess_char[t] * efficiency / 12 - ess_dischar[t] / 12
 
-                if(t == 0):
-                    m.addConstr(0.5 * ess_cap + temp_charge >= ess_cap * 0.1)
-                    m.addConstr(0.5 * ess_cap + temp_charge <= ess_cap * 0.9)
-                else:
-                    m.addConstr(self.ess[t-1] * ess_cap + temp_charge >= ess_cap * 0.1)
-                    m.addConstr(self.ess[t-1] * ess_cap + temp_charge <= ess_cap * 0.9)
+                m.addConstr(0.5 * ess_cap + temp_charge >= ess_cap * 0.1)
+                m.addConstr(0.5 * ess_cap + temp_charge <= ess_cap * 0.9)
+                
             m.addConstr(0 - temp_charge <= ess_cost)   #初始值要等於最後值
             ess_penalty = ess_cost * 50
 
@@ -260,7 +257,7 @@ class fcs:  #沒有新車加入
                 Pnet[t] = Pnet[t] + ev_load[t] - pv[t]
                 for index in range(len(se_list)):
                     Pnet[t] += se_char[t][index] * efficiency
-                Pnet[t] += ess_char[t]- ess_dischar[t] * efficiency
+                Pnet[t] += ess_char[t] - ess_dischar[t] * efficiency
                 m.addConstr(Pnet[t] <= Pbuy[t])
                 total_cost = total_cost + Pbuy[t] * tou[t] / 12 
                 
@@ -344,16 +341,16 @@ class fcs:  #沒有新車加入
             x_ess = [[0]*4 for _ in range(num_time)]
             for t in range(now_time-1, num_time):
                 if(t == 0):
-                    self.ess[t] = 0.5 + (ess_char[t].x*efficiency - ess_dischar[t].x)/12/self.ess_cap
+                    self.ess[t] = 0.5 + (ess_char[t].x*efficiency - ess_dischar[t].x)/12/ess_cap
                 else:
-                    self.ess[t] = self.ess[t-1] + (ess_char[t].x*efficiency - ess_dischar[t].x)/12/self.ess_cap   
+                    self.ess[t] = self.ess[t-1] + (ess_char[t].x*efficiency - ess_dischar[t].x)/12/ess_cap   
             
             for t in range(num_time):
                 x_ess[t][0] = t+1
-                x_ess[t][1] = self.ess[t]
+                x_ess[t][1] = round(self.ess[t],2)
                 if(t >= now_time-1):
-                    x_ess[t][2] = ess_char[t].x*efficiency/12/self.ess_cap
-                    x_ess[t][3] = ess_dischar[t].x/12/self.ess_cap
+                    x_ess[t][2] = ess_char[t].x*efficiency/12/ess_cap
+                    x_ess[t][3] = ess_dischar[t].x/12/ess_cap
 
 
             with open('ess.csv', mode='w', newline='') as file:
@@ -578,13 +575,9 @@ class fcs_new_ev: #有新車加入
 
                 temp_charge += ess_char[t] * efficiency / 12 - ess_dischar[t] / 12
 
-                if(t == 0):
-                    m.addConstr(0.5 * ess_cap + temp_charge >= ess_cap * 0.1)
-                    m.addConstr(0.5 * ess_cap + temp_charge <= ess_cap * 0.9)
-                else:
-                    m.addConstr(self.ess[t-1] * ess_cap + temp_charge >= ess_cap * 0.1)
-                    m.addConstr(self.ess[t-1] * ess_cap + temp_charge <= ess_cap * 0.9)
-                    
+                m.addConstr(0.5 * ess_cap + temp_charge >= ess_cap * 0.1)
+                m.addConstr(0.5 * ess_cap + temp_charge <= ess_cap * 0.9)
+
             m.addConstr(0 - temp_charge <= ess_cost) #初始值要等於最後值
             ess_penalty = ess_cost * 50
 
