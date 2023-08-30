@@ -57,6 +57,20 @@ class road:  #沒有新車加入
         self.get_FCS_info()
         if(new_ev == 1):
             self.update_ev_list()
+
+    def read_file(self, file_name): #從本地端讀取資料
+        try:
+            with open(file_name, 'r', encoding='utf-8', errors='ignore', newline='') as file:
+                csv_reader = csv.reader(file)
+                header = next(csv_reader)
+                info = []
+                for row in csv_reader:
+                    info.append(float(row[1]))
+                return info
+        except FileNotFoundError:
+            print('文件未被找到')
+        except Exception as e:       
+            print('發生錯誤', e)
     
     def read_parameter(self): #從本地端讀取資料
         try:
@@ -118,28 +132,16 @@ class road:  #沒有新車加入
         except Exception as e:
             print('發生錯誤', e)
             
-
-    def read_tou(self):
-        try: 
-            with open('tou.csv', 'r', newline='') as file:
-                csv_reader = csv.reader(file)
-                header = next(csv_reader)
-                info = []
-                for row in csv_reader:
-                    info.append(row[1])
-                self.tou = info
-        except FileNotFoundError:
-            print('文件未被找到')
-        except Exception as e:
-            print('發生錯誤', e)
         
     def get_FCS_info(self):
         self.read_parameter()
         self.read_se_list()
         self.read_ev_list()
-        self.read_tou()
+        self.tou = self.read_file('tou.csv')
+        self.ev_load = self.read_file('ev_load_road.csv')
     
     def update_ev_list(self): #將新車加入
+        print('aa')
         try: 
             with open('new_ev.csv', 'r', newline='') as csvfile:
                 reader = csv.reader(csvfile)
@@ -148,6 +150,7 @@ class road:  #沒有新車加入
                                  float(row[3]), float(row[4]), float(row[5]),
                                  int(row[6]), int(row[7]))
                 self.ev_list.append(temp_ev)
+                self.ev_list[len(self.ev_list)-1].charge = (self.ev_list[len(self.ev_list)-1].soc_out - self.ev_list[len(self.ev_list)-1].soc_now) * self.ev_list[len(self.ev_list)-1].capacity
                 self.se_list[int(row[7])-1].index_in_evlist = len(self.ev_list)-1
                 self.se_list[int(row[7])-1].time_in = int(row[1])
                 self.se_list[int(row[7])-1].time_out = int(row[2])
@@ -162,6 +165,7 @@ class road:  #沒有新車加入
             now_time = self.now_time
             ev_list = self.ev_list
             se_list = self.se_list
+            ev_load = self.ev_load
             tou = self.tou
             num_time = self.num_time
             efficiency = self.efficiency
@@ -195,6 +199,7 @@ class road:  #沒有新車加入
             for t in range(now_time-1, num_time): #超過契約容量之罰金
                 Pbuy[t] = m.addVar(lb=0)
                 pc_cost[t] = m.addVar(lb=0)
+                Pnet[t] += ev_load[t]
                 for index in range(len(se_list)):
                     Pnet[t] = Pnet[t] + se_char[t][index] * efficiency
                 m.addConstr(Pnet[t] <= Pbuy[t])
@@ -220,8 +225,7 @@ class road:  #沒有新車加入
                 for index in range(len(se_list)):
                     if(se_list[index].index_in_evlist != -1):
                         if(ev_list[se_list[index].index_in_evlist].time_in < t+1 and ev_list[se_list[index].index_in_evlist].time_out > t+1): #只排入場下一時段和出場前一時段
-                            x_se_char[t][index+1] = se_char[t][index].x
-
+                            x_se_char[t][index+1] = se_char[t][index].x 
             for t in range(num_time):
                 x_se_char[t][0] = t+1 
             with open('charger_power.csv', mode='w', newline='') as file:
@@ -232,10 +236,6 @@ class road:  #沒有新車加入
                     header.append(temp)
                 writer.writerow(header)
                 writer.writerows(x_se_char)
-                
-            return_se_char = [0]*len(se_list)
-            for index in range(len(se_list)):
-                return_se_char[index] = x_se_char[now_time][index]
 
             # 2.取場內車子現在充電電量
             ev_list_arr = [[0.0]*8 for _ in range(len(ev_list))]
@@ -330,8 +330,9 @@ class road_new_ev: #有新車加入
         self.pnet = [0]*(self.num_time)          #淨負載
         self.pnet_plus = [0]*(self.num_time)     #正淨負載
         self.get_FCS_info()
+        self.ev_check = 0                   #用來判斷電動車是否可以進場
         if(self.check(name, time_in, time_out, soc_in, soc_out, capacity, char_type, location_x, location_y) == 0):  #檢查新車是否到的了本場
-            return
+            self.ev_check = -1
         
     def check(self, name, time_in, time_out, soc_in, soc_out, capacity, char_type, location_x, location_y):
         distance = math.sqrt((self.location_x - location_x)**2 + (self.location_y - location_y)**2)
@@ -355,6 +356,20 @@ class road_new_ev: #有新車加入
                 self.ev_list[len(self.ev_list)-1].charge = (self.ev_list[len(self.ev_list)-1].soc_out - self.ev_list[len(self.ev_list)-1].soc_in) * self.ev_list[len(self.ev_list)-1].capacity
                 self.se_list[num_se-1].index_in_evlist = len(self.ev_list)-1
                 return 1
+            
+    def read_file(self, file_name): #從本地端讀取資料
+        try:
+            with open(file_name, 'r', encoding='utf-8', errors='ignore', newline='') as file:
+                csv_reader = csv.reader(file)
+                header = next(csv_reader)
+                info = []
+                for row in csv_reader:
+                    info.append(float(row[1]))
+                return info
+        except FileNotFoundError:
+            print('文件未被找到')
+        except Exception as e:       
+            print('發生錯誤', e)
     
     def read_parameter(self): #從本地端讀取資料
         try:
@@ -426,14 +441,18 @@ class road_new_ev: #有新車加入
         self.read_parameter()
         self.read_se_list()
         self.read_ev_list()
-        self.read_tou()
+        self.tou = self.read_file('tou.csv')
+        self.ev_load = self.read_file('ev_load_road.csv')
 
     def schedule(self):
+        if(self.ev_check == -1):
+            return 0,0,0,0
         try:
             m = gp.Model("load_schedule")
             now_time = self.now_time
             ev_list = self.ev_list
             se_list = self.se_list
+            ev_load = self.ev_load
             tou = self.tou
             num_time = self.num_time
             efficiency = self.efficiency
@@ -467,6 +486,7 @@ class road_new_ev: #有新車加入
             for t in range(now_time-1, num_time): #超過契約容量之罰金
                 Pbuy[t] = m.addVar(lb=0)
                 pc_cost[t] = m.addVar(lb=0)
+                Pnet[t] = ev_load[t]
                 for index in range(len(se_list)):
                     Pnet[t] = Pnet[t] + se_char[t][index] * efficiency
                 m.addConstr(Pnet[t] <= Pbuy[t])
@@ -513,12 +533,21 @@ class road_new_ev: #有新車加入
             print("Gurobi 錯誤:", e)
         
 
-                
-#myfcs = load_new_ev(87,2,87,193,29,86,100,2,7.1,1.3)
-#unit_price_of_ch, total_price_of_space, total_charge = myfcs.schedule()
-                
+#測試用                
+# myfcs = road_new_ev(17,23,17,23,49,72,100,1,5.5,7.2)
+# spaceID, total_charge, unit_price_of_ch, total_price_of_space = myfcs.schedule()
 
 
+
+# myfcs_1 = road(23,-1)
+# se_char = myfcs_1.schedule()
+                
+
+# myfcs_2 = road_new_ev(16,122,16,32,35,83,100,2,3.1,6.8)
+# spaceID, total_charge, unit_price_of_ch, total_price_of_space = myfcs_2.schedule()
+
+# myfcs_3 = road(16,1)
+# se_char = myfcs_3.schedule()
 
 
 
