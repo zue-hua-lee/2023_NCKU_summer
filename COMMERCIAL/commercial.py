@@ -687,7 +687,7 @@ class com_new_ev: #有新車加入
                 csv_writer.writerow(new_ev)
                 
             final_soc = int(self.ev_list[len(ev_list)-1].soc_in + total_charge/self.ev_list[len(ev_list)-1].capacity*100)
-            return self.ev_list[len(ev_list)-1].name, final_soc,unit_price_of_ch, total_price_of_space
+            return self.ev_list[len(ev_list)-1].num_se, final_soc,int(unit_price_of_ch), int(total_price_of_space)
         
         except gp. GurobiError as e:
             print ('Error code ' + str(e. errno ) + ": " + str(e))
