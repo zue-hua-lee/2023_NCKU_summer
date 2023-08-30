@@ -440,7 +440,7 @@ class com_new_ev: #有新車加入
                         num_se = index+1
                         diff_time = self.se_list[index].time_out - time_in
             elif(char_type == 2): #快充
-                for index in range(self.ac_num_charge, self.dc_num_charge):
+                for index in range(self.ac_num_charge, self.ac_num_charge+self.dc_num_charge):
                     if(self.se_list[index].time_out - time_in < diff_time):
                         num_se = index+1
                         diff_time = self.se_list[index].time_out - time_in
@@ -670,8 +670,9 @@ class com_new_ev: #有新車加入
 
             if(self.ev_list[len(ev_list)-1].num_se <= self.ac_num_charge):
                 unit_price_of_ch, total_price_of_space, total_price = estimate_price(x_Pnet, x_se_char, tou, 1, ev_list[len(ev_list)-1].time_in, ev_list[len(ev_list)-1].time_out, self.efficiency, Ptr)
-            else:    
+            else:   
                 unit_price_of_ch, total_price_of_space, total_price = estimate_price(x_Pnet, x_se_char, tou, 2, ev_list[len(ev_list)-1].time_in, ev_list[len(ev_list)-1].time_out, self.efficiency, Ptr)
+            
             with open('new_ev.csv', 'w', newline='') as csvfile:
                 new_ev = [0]*8
                 csv_writer = csv.writer(csvfile)
@@ -694,7 +695,7 @@ class com_new_ev: #有新車加入
                 
 #測試用                
 myfcs = com_new_ev(15,121,15,23,16,97,100,2,6,0.5)
-spaceID, total_charge, unit_price_of_ch, total_price_of_space = myfcs.schedule()
+ChargerID, final_soc, unit_price_of_ch, total_price_of_space, total_price = myfcs.schedule()
 
 
 
