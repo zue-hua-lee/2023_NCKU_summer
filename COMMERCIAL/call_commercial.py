@@ -21,5 +21,5 @@ if __name__ == "__main__":
         return_se_char[index][2] = se_char[index].Power
         return_se_char[index][3] = se_char[index].TimeStamp
         return_se_char[index][4] = se_char[index].ev_soc
-    print(return_se_char)
-
+    for row in return_se_char:
+        print(' '.join(map(str, row)))

@@ -25,7 +25,7 @@ func (t *ServiceSetup) ShowAllOffer() (string, error){
 	return string(respone.Payload), nil
 }
 
-func (t *ServiceSetup) Match(stationID, chargerID, maxSoC, perPrice, now_offerID string) (string, error) {
+func (t *ServiceSetup) Match(stationID, chargerID, maxSoC, perPrice, parkPrice, tolPrice, now_offerID string) (string, error) {
 	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "match", Args: [][]byte{[]byte(stationID), []byte(chargerID), []byte(maxSoC), []byte(perPrice), []byte(parkPrice), []byte(tolPrice), []byte(now_offerID)}}
 	respone, err := t.Client.Execute(req)
 	if err != nil {
