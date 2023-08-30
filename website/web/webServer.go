@@ -13,9 +13,6 @@ import (
 )
 
 func  WebStart(app *controller.Application)  {
-	
-	go app.Schedule() // 啟動定時任務的 Goroutine
-
 	fs := http.FileServer(http.Dir("web/static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
@@ -36,20 +33,11 @@ func  WebStart(app *controller.Application)  {
     http.HandleFunc("/choice", app.Choice)
     http.HandleFunc("/match", app.Match)
 
-
-    // http.HandleFunc("/showCarbyID", app.ShowCarbyID)
-    // http.HandleFunc("/showAllUser", app.ShowAllUser)
-	// http.HandleFunc("/showAllOffer", app.ShowAllOffer)
-	// http.HandleFunc("/showAllMatch", app.ShowAllMatch)
-    // http.HandleFunc("/power", app.Power)
-	// http.HandleFunc("/showAllPower", app.ShowAllPower)
-	// http.HandleFunc("/showPowerbyCharger", app.ShowPowerbyCharger)
-
-	
 	fmt.Println("Start test WEB, port: 9000")
 	err := http.ListenAndServe(":9000", nil)
 	if err != nil {
 		fmt.Println("Start WEB Error")
 	}
+	go app.Schedule() // 啟動定時任務的 Goroutine
 
 }

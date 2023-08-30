@@ -21,6 +21,7 @@ import (
 type Offer struct {
     OfferID string           `json:"offerID"`
     UserID string            `json:"userID"`
+	Date string                `json:"date"`
     ArrTime int              `json:"arrTime"`
     DepTime int              `json:"depTime"`
     ArrSoC int               `json:"arrSoC"`
@@ -34,25 +35,12 @@ type Option struct {
     Price int                  `json:"price"`
 }
 type Match struct {
-	MatchID string             `json:"matchID"`
-	OfferID string             `json:"offerID"`
+    MatchID string             `json:"matchID"`
+    OfferID string             `json:"offerID"`
 	StationID string           `json:"stationID"`
 	ChargerID int              `json:"chargerID"`
-	Date string                `json:"date"`
-	ArrTime int                `json:"arrTime"`
-	DepTime int                `json:"depTime"`
-	ArrSoC int             	   `json:"arrSoC"`
-	MaxSoC int                 `json:"maxSoC"`
-	Price int                  `json:"price"`
-}
-type Choice struct {
-	StationID string           `json:"stationID"`
-	ChargerID string           `json:"chargerID"`
-	Acdc string                `json:"acdc"`
-	ArrTime string             `json:"arrTime"`
-	DepTime string             `json:"depTime"`
-	MaxSoC string              `json:"maxSoC"`
-	Price string               `json:"price"`
+    MaxSoC int                 `json:"maxSoC"`
+    Price int                  `json:"price"`
 }
 type Power struct {
 	StationID string           `json:"stationID"`
@@ -104,8 +92,8 @@ func getDataFromCookies(r *http.Request, name string, data interface{}) error {
     if err != nil {
         return err
     }
-    if err := json.Unmarshal([]byte(decodedValue), &data);
-	err != nil {
+    err = json.Unmarshal([]byte(decodedValue), &data)
+    if err != nil {
         return err
     }
     return nil
@@ -130,24 +118,22 @@ func cookiesExist(r *http.Request, name string) bool {
 	return false
 }
 // 將時間轉為區間段
-func timeToInt(Time string) (string, error) {
+func timeToInt(Time string) (int, error) {
     layout := "15:04"
     t, err := time.Parse(layout, Time)
     if err != nil {
-        return "", err
+        return 0, err
     }
     TimeInSeconds := t.Hour()*3600 + t.Minute()*60 + t.Second()
-    Time2 := strconv.Itoa((TimeInSeconds / 300) + 1)
+    Time2 := (TimeInSeconds / 300) + 1
     return Time2, nil
 }
 func intToTime(interval int) (string) {
     totalSeconds := interval * 300
     hours := totalSeconds / 3600
-    totalSeconds %= 3600
-    minutes := totalSeconds / 60
-    seconds := totalSeconds % 60
+    minutes := totalSeconds % 3600
     
-    formattedTime := fmt.Sprintf("%02d:%02d:%02d", hours, minutes, seconds)
+    formattedTime := fmt.Sprintf("%02d:%02d", hours, minutes)
     return formattedTime
 }
 
@@ -169,7 +155,7 @@ func (app *Application) MainPageView(w http.ResponseWriter, r *http.Request) {
 		NowCarID:"",
 	}
 	now_userID, _ := getCookieValue(r, "now_userID")
-	data.NowCarID, _ = app.Fabric.ShowCarbyID(now_userID)
+	data.NowCarID, _ = app.Fabric.ShowCarbyUser(now_userID)
 	showView(w, r, "mainPage.html", data)
 }
 func (app *Application) RequestView(w http.ResponseWriter, r *http.Request) {
@@ -181,9 +167,21 @@ func (app *Application) RequestView(w http.ResponseWriter, r *http.Request) {
 }
 func (app *Application) Request1View(w http.ResponseWriter, r *http.Request) {
 	clearCookies(w, "now_offerID", "now_matchID", "choice", "optionA", "optionB", "optionC")
-	showView(w, r, "request1.html", nil)
+	data := &struct {
+		NowCarID string
+		Flag bool
+		Msg string
+	}{
+		NowCarID:"",
+		Flag:false,
+		Msg:"",
+	}
+	now_userID, _ := getCookieValue(r, "now_userID")
+	data.NowCarID, _ = app.Fabric.ShowCarbyUser(now_userID)
+	showView(w, r, "request1.html", data)
 }
 type request2_data struct {
+	NowCarID string
 	FlagA bool
 	MsgA1 string
 	MsgA2 string
@@ -199,7 +197,13 @@ type request2_data struct {
 	Flag bool
 	Msg string
 } 
-func showOptions(r *http.Request) (data request2_data) {
+func (app *Application) Request2View(w http.ResponseWriter, r *http.Request) {
+	clearCookies(w, "choice")
+
+	var data request2_data
+	now_userID, _ := getCookieValue(r, "now_userID")
+	data.NowCarID, _ = app.Fabric.ShowCarbyUser(now_userID)
+
 	if cookiesExist(r, "optionA") {
 		var optionA Option
 		getDataFromCookies(r, "optionA", &optionA)
@@ -226,12 +230,17 @@ func showOptions(r *http.Request) (data request2_data) {
 		data.MsgC2 = strconv.Itoa(optionC.Price)
 		data.MsgC3 = strconv.Itoa(optionC.Price)
 	}
-	return data
-}
-func (app *Application) Request2View(w http.ResponseWriter, r *http.Request) {
-	clearCookies(w, "choice")
-	data := showOptions(r)
 	showView(w, r, "request2.html", data)
+}
+type request3_data struct {
+	NowCarID string
+	StationID string
+	ChargerID string
+	Acdc string
+	ArrTime string
+	DepTime string
+	MaxSoC string
+	Price string
 }
 func (app *Application) Request3View(w http.ResponseWriter, r *http.Request) {
 	var offer Offer
@@ -242,7 +251,10 @@ func (app *Application) Request3View(w http.ResponseWriter, r *http.Request) {
 	var option Option
 	getDataFromCookies(r, "choice", &option)
 
-	var data Choice
+	var data request3_data
+	now_userID, _ := getCookieValue(r, "now_userID")
+	data.NowCarID, _ = app.Fabric.ShowCarbyUser(now_userID)
+
 	switch option.StationID {
 	case "A":
 		data.StationID = "甲地"
@@ -270,11 +282,16 @@ func (app *Application) Request4View(w http.ResponseWriter, r *http.Request) {
 	offerAsBytes, _ := app.Fabric.ShowOfferbyID(now_offerID)
 	json.Unmarshal([]byte(offerAsBytes), &offer)
 
-	var option Option
-	getDataFromCookies(r, "choice", &option)
+	var match Match
+	now_matchID, _ := getCookieValue(r, "now_matchID")
+	matchAsBytes, _ := app.Fabric.ShowMatchbyID(now_matchID)
+	json.Unmarshal([]byte(matchAsBytes), &match)
 
-	var data Choice
-	switch option.StationID {
+	var data request3_data
+	now_userID, _ := getCookieValue(r, "now_userID")
+	data.NowCarID, _ = app.Fabric.ShowCarbyUser(now_userID)
+
+	switch match.StationID {
 	case "A":
 		data.StationID = "甲地"
 	case "B":
@@ -282,7 +299,7 @@ func (app *Application) Request4View(w http.ResponseWriter, r *http.Request) {
 	case "C":
 		data.StationID = "丙地"
 	}
-	data.ChargerID = strconv.Itoa(option.ChargerID)
+	data.ChargerID = strconv.Itoa(match.ChargerID)
 	if offer.Acdc == 1 {
 		data.Acdc = "慢充"
 	} else {
@@ -290,8 +307,9 @@ func (app *Application) Request4View(w http.ResponseWriter, r *http.Request) {
 	}
 	data.ArrTime = intToTime(offer.ArrTime)
 	data.DepTime = intToTime(offer.DepTime)
-	data.MaxSoC = strconv.Itoa(option.MaxSoC)
-	data.Price = strconv.Itoa(option.Price)
+	data.MaxSoC = strconv.Itoa(match.MaxSoC)
+	data.Price = strconv.Itoa(match.Price)
+
 	showView(w, r, "request4.html", data)
 }
 func (app *Application) TrackView(w http.ResponseWriter, r *http.Request) {
@@ -302,7 +320,14 @@ func (app *Application) TrackView(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func (app *Application) TrackNoView(w http.ResponseWriter, r *http.Request) {
-	showView(w, r, "trackNo.html", nil)
+	data := &struct {
+		NowCarID string
+	}{
+		NowCarID:"",
+	}
+	now_userID, _ := getCookieValue(r, "now_userID")
+	data.NowCarID, _ = app.Fabric.ShowCarbyUser(now_userID)
+	showView(w, r, "trackNo.html", data)
 }
 func (app *Application) TrackYesView(w http.ResponseWriter, r *http.Request) {
 	var offer Offer
@@ -310,75 +335,60 @@ func (app *Application) TrackYesView(w http.ResponseWriter, r *http.Request) {
 	offerAsBytes, _ := app.Fabric.ShowOfferbyID(now_offerID)
 	json.Unmarshal([]byte(offerAsBytes), &offer)
 
-	var option Option
-	getDataFromCookies(r, "choice", &option)
-
+	var match Match
 	now_matchID, _ := getCookieValue(r, "now_matchID")
+	matchAsBytes, _ := app.Fabric.ShowMatchbyID(now_matchID)
+	json.Unmarshal([]byte(matchAsBytes), &match)
 
+	// 讀取過程中電動汽車的充電功率
 	type AllPower struct {
         Powers []Power2 `json:"powers"`
     }
     var allPower AllPower
-	
-	// msg, err := app.Fabric.ShowAllPower()
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }else{
-	// 	fmt.Println(msg)
-	// }
-	currentTime := time.Now()
-	formattedTime := currentTime.Format("15:04")
-	timeAsInt, err := timeToInt(formattedTime)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-	checktimeasint, _ := strconv.Atoi(timeAsInt)
-	fmt.Println("Current time:", formattedTime)
-	fmt.Printf("第%d區間\n",checktimeasint)
-	fmt.Printf("ArrTime: %d\n", offer.ArrTime)
-	fmt.Printf("DepTime: %d\n", offer.DepTime)
-
-    AllPowerAsBytes, err := app.Fabric.ShowPowerbyMatch(now_matchID)
-	if err != nil {
-		fmt.Println(err)
-	}
+    AllPowerAsBytes, _ := app.Fabric.ShowPowerbyMatch(now_matchID)
     json.Unmarshal([]byte(AllPowerAsBytes), &allPower)
     powers := allPower.Powers
-	
-	fmt.Println(AllPowerAsBytes)
 
-	var timeChargePairs []struct {
+	type TimeChargeData struct {
 		Time   string
 		Charge int
 	}
-    for _, power := range powers {
-        data := struct {
-			Time   string
-			Charge int
-        }{
-            Time: intToTime(power.TimeStamp),
-            Charge: power.Power,
-        }
-        timeChargePairs = append(timeChargePairs, data)
-    }
+	var timeChargePairs []TimeChargeData
+
+	for _, power := range powers {
+		data := TimeChargeData{
+			Time:   intToTime(power.TimeStamp),
+			Charge: power.Power,
+		}
+		timeChargePairs = append(timeChargePairs, data)
+	}
+
+	data := TimeChargeData{
+		Time: offer.ArrTime,
+		Charge: offer.ArrSoC,
+	}
+	timeChargePairs = append(timeChargePairs, data)
+
+	
 
 	data := struct {
-		Msg1            string
-		Msg2            string
-		Msg3            string
-		TimeChargeArray []struct {
-			Time   string
-			Charge int
-		}
+		NowCarID string
+		Msg1 string
+		Msg2 string
+		Msg3 string
+		TimeChargeArray []TimeChargeData
 	}{
+		NowCarID: "",
 		Msg1: "",
 		Msg2: "",
 		Msg3: "",
 		TimeChargeArray: timeChargePairs,
 	}
 
-	switch option.StationID {
+	now_userID, _ := getCookieValue(r, "now_userID")
+	data.NowCarID, _ = app.Fabric.ShowCarbyUser(now_userID)
+
+	switch match.StationID {
 	case "A":
 		data.Msg1 = "甲地"
 	case "B":
@@ -386,7 +396,7 @@ func (app *Application) TrackYesView(w http.ResponseWriter, r *http.Request) {
 	case "C":
 		data.Msg1 = "丙地"
 	}
-	data.Msg2 = strconv.Itoa(option.ChargerID)
+	data.Msg2 = strconv.Itoa(match.ChargerID)
 	if offer.Acdc == 1 {
 		data.Msg3 = "慢充"
 	} else {
@@ -408,41 +418,76 @@ func (app *Application) HistoryListView(w http.ResponseWriter, r *http.Request) 
         Matchs []Match `json:"matchs"`
     }
 
-    var allMatch AllMatch
 	now_userID, _ := getCookieValue(r, "now_userID")
+
+    var allMatch AllMatch
     AllMatchAsBytes, _ := app.Fabric.ShowMatchbyUser(now_userID)
     json.Unmarshal([]byte(AllMatchAsBytes), &allMatch)
     matchs := allMatch.Matchs
 
-    var allMatchData []struct {
+	var allMatchData []struct {
 		Msg1 string
 		Msg2 string
 		Msg3 string
 		Msg4 string
 		Msg5 string
-    }
+	}
+	
+	for _, match := range matchs {
+		data := struct {
+			Msg1 string
+			Msg2 string
+			Msg3 string
+			Msg4 string
+			Msg5 string
+		}{
+			Msg1: "",
+			Msg2: "",
+			Msg3: "",
+			Msg4: "",
+			Msg5: "",
+		}
+		var offer Offer
+		now_offerID, _ := getCookieValue(r, "now_offerID")
+		offerAsBytes, _ := app.Fabric.ShowOfferbyID(now_offerID)
+		json.Unmarshal([]byte(offerAsBytes), &offer)
 
-    for _, match := range matchs {
-        data := struct {
-            Msg1 string
-            Msg2 string
-            Msg3 string
-            Msg4 string
-            Msg5 string
-        }{
-            Msg1: match.Date,
-            Msg2: intToTime(match.ArrTime),
-            Msg3: intToTime(match.DepTime),
-            Msg4: strconv.Itoa(match.MaxSoC),
-            Msg5: strconv.Itoa(match.Price),
-        }
-        allMatchData = append(allMatchData, data)
-    }
+		data.Msg1 = offer.Date
+		data.Msg2 = intToTime(offer.ArrTime)
+		data.Msg3 = intToTime(offer.DepTime)
+		data.Msg4 = strconv.Itoa(match.MaxSoC)
+		data.Msg5 = strconv.Itoa(match.Price)
 
-    showView(w, r, "historyList.html", allMatchData)
+		allMatchData = append(allMatchData, data)
+	}
+	
+	data := &struct {
+		NowCarID string
+		AllMatchData []struct {
+			Msg1 string
+			Msg2 string
+			Msg3 string
+			Msg4 string
+			Msg5 string
+		}
+	}{
+		NowCarID: "",
+		AllMatchData: allMatchData,
+	}
+	
+	data.NowCarID, _ = app.Fabric.ShowCarbyUser(now_userID)
+	showView(w, r, "historyList.html", data)
+	
 }
 func (app *Application) HistoryNoView(w http.ResponseWriter, r *http.Request) {
-	showView(w, r, "historyNo.html", nil)
+	data := &struct {
+		NowCarID string
+	}{
+		NowCarID:"",
+	}
+	now_userID, _ := getCookieValue(r, "now_userID")
+	data.NowCarID, _ = app.Fabric.ShowCarbyUser(now_userID)
+	showView(w, r, "historyNo.html", data)
 }
 
 func (app *Application) Schedule() {
@@ -451,30 +496,24 @@ func (app *Application) Schedule() {
 		// 檢查現在時間是否是5的倍數
 		if currentTime.Minute() % 5 == 0 {
 			// 顯示現在時間
-			formattedTime := currentTime.Format("15:04")
+			NowTime := currentTime.Format("15:04")
+			NowInt, _ := timeToInt(NowTime)
 	
-			timeAsInt, err := timeToInt(formattedTime)
-			if err != nil {
-				fmt.Println("Error:", err)
-				return
-			}
-			checktimeasint, _ := strconv.Atoi(timeAsInt)
-	
-			fmt.Println("Current time:", formattedTime)
+			fmt.Println("Current time:", NowTime)
 			// 將各個充電裝的功率上鏈
-			fmt.Printf("第%d區間上鍊開始\n",checktimeasint)
+			fmt.Printf("第%d區間上鍊開始\n",NowInt)
 			var powers []Power
 			for j := 1; j <= 12; j++{
-				powers = append(powers, Power{StationID: "A", ChargerID: j, Power: 0, State: 0, TimeStamp: checktimeasint})
+				powers = append(powers, Power{StationID: "A", ChargerID: j, Power: 0, State: 0, TimeStamp: NowInt})
 			}
 			for j := 1; j <= 6; j++{
-				powers = append(powers, Power{StationID: "B", ChargerID: j, Power: 30, State: 1, TimeStamp: checktimeasint})
+				powers = append(powers, Power{StationID: "B", ChargerID: j, Power: 30, State: 1, TimeStamp: NowInt})
 			}
 			for j := 1; j <= 20; j++{
-				powers = append(powers, Power{StationID: "C", ChargerID: j, Power: 40, State: 1, TimeStamp: checktimeasint})
+				powers = append(powers, Power{StationID: "C", ChargerID: j, Power: 40, State: 1, TimeStamp: NowInt})
 			}
 			app.Power(powers)
-			fmt.Printf("第%d區間上鍊結束\n",checktimeasint)
+			fmt.Printf("第%d區間上鍊結束\n",NowInt)
 		}
 		// 等待一分鐘後再次檢查
 		time.Sleep(time.Minute)
@@ -489,7 +528,7 @@ func (app *Application) Register(w http.ResponseWriter, r *http.Request)  {
 	password := r.FormValue("password")
 
 	// 查看車牌是否已註冊過
-	_ , err := app.Fabric.GetUserIDbyCarID(carID)
+	_ , err := app.Fabric.GetUserbyCarID(carID)
 	if err == nil {
 		err = errors.New("Description: 車牌曾經註冊!請登入!")
 	}else{
@@ -544,6 +583,9 @@ func (app *Application) Login(w http.ResponseWriter, r *http.Request)  {
 }
 
 func (app *Application) Offer(w http.ResponseWriter, r *http.Request)  {
+	currentTime := time.Now()
+	date := currentTime.Format("2006-01-02")
+
 	// 將進場時間轉換為區間段
 	arrTime := r.FormValue("arrTime")
 	arrTime2, err := timeToInt(arrTime)
@@ -557,22 +599,28 @@ func (app *Application) Offer(w http.ResponseWriter, r *http.Request)  {
 	if err != nil {
 		http.Error(w, "Invalid depTime format", http.StatusBadRequest)
 	}
+	fmt.Println("deptime: " + depTime)
 
 	arrSoC := r.FormValue("arrSoC")
 	depSoC := r.FormValue("depSoC")
 	acdc := r.FormValue("acdc")
 	now_userID, _ := getCookieValue(r, "now_userID")
-	now_offerID, err := app.Fabric.Offer(arrTime2, depTime2, arrSoC, depSoC, acdc, now_userID)
+	now_offerID, err := app.Fabric.Offer(date, strconv.Itoa(arrTime2), strconv.Itoa(depTime2), arrSoC, depSoC, acdc, now_userID)
 
 	if err != nil {
 		// 申請充電失敗
 		data := &struct {
+			NowCarID string
 			Flag bool
 			Msg string
 		}{
+			NowCarID:"",
 			Flag:true,
 			Msg:"",
 		}
+		now_userID, _ := getCookieValue(r, "now_userID")
+		data.NowCarID, _ = app.Fabric.ShowCarbyUser(now_userID)
+		
 		errMessage := strings.Split(err.Error(), "Description: ")
 		data.Msg = errMessage[1]
 		showView(w, r, "request1.html", data)
@@ -601,62 +649,24 @@ func (app *Application) Choice(w http.ResponseWriter, r *http.Request) {
 		getDataFromCookies(r, "optionB", &option)
 	case "place_3":
 		getDataFromCookies(r, "optionC", &option)
-	default:
-		// 使用者沒有做出選擇
-		data := showOptions(r)
-		data.Flag = true
-		data.Msg = "請做出選擇後重新送出"
-		showView(w, r, "request2.html", data)
-		return
 	}
-	// 使用者做出選擇
 	setDataInCookies(w, "choice", option)
 	http.Redirect(w, r, "/request3.html", http.StatusSeeOther)
 }
 
 func (app *Application) Match(w http.ResponseWriter, r *http.Request)  {
-	clearCookies(w, "optionA", "optionB", "optionC")
-
-	currentTime := time.Now()
-	date := currentTime.Format("2006-01-02")
-	
 	var option Option
 	getDataFromCookies(r, "choice", &option)
 
-	var offer Offer
 	now_offerID, _ := getCookieValue(r, "now_offerID")
-	offerAsBytes, _ := app.Fabric.ShowOfferbyID(now_offerID)
-	json.Unmarshal([]byte(offerAsBytes), &offer)
 
-	now_matchID, _ := app.Fabric.Match(option.StationID, strconv.Itoa(option.ChargerID), date, strconv.Itoa(offer.ArrTime), strconv.Itoa(offer.DepTime), strconv.Itoa(offer.ArrSoC), strconv.Itoa(option.MaxSoC), strconv.Itoa(option.Price), now_offerID)
+	now_matchID, _ := app.Fabric.Match(option.StationID, strconv.Itoa(option.ChargerID), strconv.Itoa(option.MaxSoC), strconv.Itoa(option.Price), now_offerID)
 	fmt.Printf("[發送新配對] %s: %s\n", now_offerID, now_matchID)
 	setCookie(w, "now_matchID", now_matchID)
 
-	app.Request4View(w, r)
+	clearCookies(w, "choice", "optionA", "optionB", "optionC")
+	http.Redirect(w, r, "/request4.html", http.StatusSeeOther)
 }
-
-// func (app *Application) ShowAllMatch(w http.ResponseWriter, r *http.Request)  {
-// 	msg, err := app.Fabric.ShowAllMatch()
-
-// 	data := &struct {
-// 		Flag1 bool
-// 		Msg1 string
-// 		Flag2 bool
-// 		Msg2 string
-// 	}{
-// 		Flag1:true,
-// 		Msg1:"",
-// 		Flag2:false,
-// 		Msg2:"",
-// 	}
-// 	if err != nil {
-	// errMessage := strings.Split(err.Error(), "Description: ")
-	// data.Msg1 = errMessage[1]
-// 	}else{
-// 		data.Msg1 = "ShowAllMatch success: " + msg
-// 	}
-// 	showView(w, r, "myMatch.html", data)
-// }
 
 func (app *Application) Power(powers []Power)  {
     powersAsBytes, err := json.Marshal(powers)
@@ -668,50 +678,3 @@ func (app *Application) Power(powers []Power)  {
 		log.Fatalln(err)
 	}
 }
-// func (app *Application) ShowAllPower(w http.ResponseWriter, r *http.Request)  {
-// 	msg, err := app.Fabric.ShowAllPower()
-
-// 	data := &struct {
-// 		Flag1 bool
-// 		Msg1 string
-// 		Flag2 bool
-// 		Msg2 string
-// 	}{
-// 		Flag1:false,
-// 		Msg1:"",
-// 		Flag2:true,
-// 		Msg2:"",
-// 	}
-// 	if err != nil {
-	// errMessage := strings.Split(err.Error(), "Description: ")
-	// data.Msg2 = errMessage[1]
-// 	}else{
-// 		data.Msg2 = "ShowAllPower success: " + msg
-// 	}
-// 	showView(w, r, "myMatch.html", data)
-// }
-// func (app *Application) ShowPowerbyCharger(w http.ResponseWriter, r *http.Request)  {
-// 	stationID := r.FormValue("stationID_search")
-// 	chargerID := r.FormValue("chargerID_search")
-
-// 	msg, err := app.Fabric.ShowPowerbyCharger(stationID, chargerID)
-
-// 	data := &struct {
-// 		Flag1 bool
-// 		Msg1 string
-// 		Flag2 bool
-// 		Msg2 string
-// 	}{
-// 		Flag1:false,
-// 		Msg1:"",
-// 		Flag2:true,
-// 		Msg2:"",
-// 	}
-// 	if err != nil {
-	// errMessage := strings.Split(err.Error(), "Description: ")
-	// data.Msg2 = errMessage[1]
-// 	}else{
-// 		data.Msg2 = "ShowPowerbyCharger success: " + msg
-// 	}
-// 	showView(w, r, "myMatch.html", data)
-// }
