@@ -35,9 +35,7 @@ class power:
         self.StationID = StationID
         self.ChargeID = ChargeID
         self.Power = Power
-        self.State = 0
         self.TimeStamp = TimeStamp
-        self.ev_ID = -1
         self.ev_soc = 0        
         
 class fcs:  #沒有新車加入
@@ -373,12 +371,11 @@ class fcs:  #沒有新車加入
 
             return_se_char = []
             for index in range(len(se_list)):
-                temp_power = power(1, se_list[index].name, x_se_char[now_time][index], now_time)
+                temp_power = power(1, se_list[index].name, int(x_se_char[now_time][index]), now_time)
                 return_se_char.append(temp_power)
                 
             for index in range(len(ev_list)):
-                return_se_char[ev_list[index].num_se-1].state = 1
-                return_se_char[ev_list[index].num_se-1].ev_soc = ev_list[index].soc_now*100
+                return_se_char[ev_list[index].num_se-1].ev_soc = int(ev_list[index].soc_now*100)
                 
 
             return return_se_char
@@ -648,15 +645,15 @@ class fcs_new_ev: #有新車加入
                 csv_writer.writerow(new_ev)
             
             final_soc = int(self.ev_list[len(ev_list)-1].soc_in + total_charge/self.ev_list[len(ev_list)-1].capacity*100)
-            return self.ev_list[len(ev_list)-1].name, final_soc,unit_price_of_ch, total_price_of_space
+            return self.ev_list[len(ev_list)-1].num_se, final_soc,int(unit_price_of_ch), int(total_price_of_space)
         
         except gp. GurobiError as e:
             print ('Error code ' + str(e. errno ) + ": " + str(e))
         
                 
 #測試用                
-# myfcs = fcs_new_ev(17,23,17,23,49,72,100,1,5.5,7.2)
-# spaceID, total_charge, unit_price_of_ch, total_price_of_space = myfcs.schedule()
+myfcs = fcs_new_ev(17,23,17,23,49,72,100,1,5.5,7.2)
+spaceID, total_charge, unit_price_of_ch, total_price_of_space = myfcs.schedule()
 
 
 
