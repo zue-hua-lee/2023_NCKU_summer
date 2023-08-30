@@ -33,10 +33,10 @@
       <ul>
         <li><a href="./mainPage.html">使用說明</a></li>
         <li><a href="#">申請充電</a></li>
-        <li><a href="/track">充電追蹤</a></li>
+        <li><a href="/trackView">充電追蹤</a></li>
         <!--不確定如果沒充電要怎麼跳轉頁面-->
-        <li><a href="/history">歷史紀錄</a></li>
-        <li><a href="./index.html">登出</a></li>
+        <li><a href="/historyView">歷史紀錄</a></li>
+        <li><a href="./login.html">登出</a></li>
       </ul>
     </nav>
     <!--主要內容-->
@@ -60,12 +60,12 @@
           <input type="time" id="depTime" name="depTime" required />
           <br /><br />
           <label for="acdc">充電方式：</label>
-          <input type="radio" id="fast" name="acdc" value="1" required />
+          <input type="radio" id="fast" name="acdc" value="2" required />
           <label for="fast">快充</label>
-          <input type="radio" id="slow" name="acdc" value="2" required />
+          <input type="radio" id="slow" name="acdc" value="1" required />
           <label for="slow">慢充</label>
           <br /><br />
-          <label for="arrSoC">目前電量（%）：</label>
+          <label for="arrSoC">目前電量：</label>
           <input
             type="number"
             id="arrSoC"
@@ -75,9 +75,9 @@
             step="1"
             required
           />
-          <label for=""> kWh</label>
+          <label for=""> %</label>
           <br /><br />
-          <label for="depSoC">目標電量（%）：</label>
+          <label for="depSoC">目標電量：</label>
           <input
             type="number"
             id="depSoC"
@@ -87,12 +87,22 @@
             step="1"
             required
           />
-          <label for=""> kWh</label>
+          <label for=""> %</label>
           <br /><br />
-          <label for="location">目前位置： 
-            <iframe class="map" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3672.736578661638!2d120.21996767363838!3d22.996712217295926!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x346e7694a879f56b%3A0x5cd808e8814beed1!2z5ZyL56uL5oiQ5Yqf5aSn5a246Zu75qmf5bel56iL5a2457O7!5e0!3m2!1szh-TW!2stw!4v1692861869123!5m2!1szh-TW!2stw" width="250" height="250" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <label for="location"
+            >目前位置：
+            <iframe
+              class="map"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3672.736578661638!2d120.21996767363838!3d22.996712217295926!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x346e7694a879f56b%3A0x5cd808e8814beed1!2z5ZyL56uL5oiQ5Yqf5aSn5a246Zu75qmf5bel56iL5a2457O7!5e0!3m2!1szh-TW!2stw!4v1692861869123!5m2!1szh-TW!2stw"
+              width="250"
+              height="250"
+              style="border: 0"
+              allowfullscreen=""
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+            ></iframe>
           </label>
-          <!--之候補裝飾用定位地圖-->
+          <!--之候補樁飾用定位地圖-->
           <br />
 
           {{if .Flag}}

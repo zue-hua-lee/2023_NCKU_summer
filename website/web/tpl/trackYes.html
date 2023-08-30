@@ -24,13 +24,12 @@
       google.charts.setOnLoadCallback(drawChart);
 
       function drawChart() {
-        var data = google.visualization.arrayToDataTable([
-          ["時間", "電量"],
-          [{{.Time1}}, {{.Charge1}}],
-          [{{.Time2}}, {{.Charge2}}],
-          [{{.Time3}}, {{.Charge3}}],
-          [{{.Time4}}, {{.Charge4}}],//會隨時間增加資料量
-        ]);
+        var data = new google.visualization.DataTable();
+        data.addColumn("string", "時間");
+        data.addColumn("number", "電量");
+        {{range .TimeChargeArray}}
+        data.addRow(["{{.Time}}", {{.Charge}}]);
+        {{end}}
 
         var options = {
           title: "目前充電狀態",
@@ -63,11 +62,11 @@
     <nav>
       <ul>
         <li><a href="./mainPage.html">使用說明</a></li>
-        <li><a href="./request1.html">申請充電</a></li>
+        <li><a href="./requestView">申請充電</a></li>
         <li><a href="#">充電追蹤</a></li>
         <!--不確定如果沒充電要怎麼跳轉頁面-->
-        <li><a href="/history">歷史紀錄</a></li>
-        <li><a href="./index.html">登出</a></li>
+        <li><a href="/historyView">歷史紀錄</a></li>
+        <li><a href="./login.html">登出</a></li>
       </ul>
     </nav>
     <!--主要內容-->
@@ -84,13 +83,11 @@
               </tr>
             </thead>
             <tbody>
-              {{if .FlagA}}
               <tr>
-                <td>{{.MsgA1}}</td>
-                <td>{{.MsgA2}}</td>
-                <td>{{.MsgA3}}</td>
+                <td>{{.Msg1}}</td>
+                <td>{{.Msg2}}</td>
+                <td>{{.Msg3}}</td>
               </tr>
-              {{end}}
             </tbody>
           </table>
         </div>
