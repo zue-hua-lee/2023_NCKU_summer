@@ -512,7 +512,7 @@ class road_new_ev: #有新車加入
                     total_charge += se_char[t][ev_list[len(ev_list)-1].num_se-1].x
                     x_se_char[t] = se_char[t][ev_list[len(ev_list)-1].num_se-1].x
 
-            unit_price_of_ch, total_price_of_space = estimate_price(x_Pnet, x_se_char, tou, 1, ev_list[len(ev_list)-1].time_in, ev_list[len(ev_list)-1].time_out, Ptr)
+            unit_price_of_ch, total_price_of_space, total_price = estimate_price(x_Pnet, x_se_char, tou, 1, ev_list[len(ev_list)-1].time_in, ev_list[len(ev_list)-1].time_out, self.efficiency, Ptr)
             with open('new_ev.csv', 'w', newline='') as csvfile:
                 new_ev = [0]*8
                 csv_writer = csv.writer(csvfile)
@@ -527,7 +527,7 @@ class road_new_ev: #有新車加入
                 csv_writer.writerow(new_ev)
             
             final_soc = int(self.ev_list[len(ev_list)-1].soc_in + total_charge/self.ev_list[len(ev_list)-1].capacity*100)
-            return self.ev_list[len(ev_list)-1].num_se, final_soc,int(unit_price_of_ch), int(total_price_of_space)
+            return self.ev_list[len(ev_list)-1].num_se, final_soc, unit_price_of_ch, total_price_of_space, total_price
         
         except gp.GurobiError as e:
             print("Gurobi 錯誤:", e)
