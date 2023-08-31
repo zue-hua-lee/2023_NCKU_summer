@@ -21,9 +21,9 @@ import (
 type Offer struct {
     OfferID string           `json:"offerID"`
     UserID string            `json:"userID"`
-	Date string                `json:"date"`
-    ArrTime int              `json:"arrTime"`
-    DepTime int              `json:"depTime"`
+	Date string              `json:"date"`
+    ArrTime string           `json:"arrTime"`
+    DepTime string           `json:"depTime"`
     ArrSoC int               `json:"arrSoC"`
     DepSoC int               `json:"depSoC"`
     Acdc int                 `json:"acdc"`
@@ -32,7 +32,9 @@ type Option struct {
 	StationID string           `json:"stationID"`
 	ChargerID int              `json:"chargerID"`
     MaxSoC int                 `json:"maxSoC"`
-    Price int                  `json:"price"`
+    TolPrice int               `json:"tolPrice"`
+    PerPrice int               `json:"perPrice"`
+    ParkPrice int              `json:"parkPrice"`
 }
 type Match struct {
     MatchID string             `json:"matchID"`
@@ -40,7 +42,9 @@ type Match struct {
 	StationID string           `json:"stationID"`
 	ChargerID int              `json:"chargerID"`
     MaxSoC int                 `json:"maxSoC"`
-    Price int                  `json:"price"`
+    TolPrice int               `json:"tolPrice"`
+    PerPrice int               `json:"perPrice"`
+    ParkPrice int              `json:"parkPrice"`
 }
 type Power struct {
 	StationID string           `json:"stationID"`
@@ -145,7 +149,7 @@ func (app *Application) LoginView(w http.ResponseWriter, r *http.Request) {
 		now_userID, _ := getCookieValue(r, "now_userID")
 		fmt.Printf("[使用者登出] %s\n", now_userID)
 	}
-	clearCookies(w, "now_userID", "now_offerID", "now_matchID", "choice", "optionA", "optionB", "optionC")
+	clearCookies(w, "now_userID", "choice", "optionA", "optionB", "optionC")
 	showView(w, r, "login.html", nil)
 }
 func (app *Application) MainPageView(w http.ResponseWriter, r *http.Request) {
@@ -158,15 +162,20 @@ func (app *Application) MainPageView(w http.ResponseWriter, r *http.Request) {
 	data.NowCarID, _ = app.Fabric.ShowCarbyUser(now_userID)
 	showView(w, r, "mainPage.html", data)
 }
-func (app *Application) RequestView(w http.ResponseWriter, r *http.Reques裝) {
-	if cookiesExist(r, "now_offerID") {
+func (app *Application) RequestView(w http.ResponseWriter, r *http.Request) {
+	// if cookiesExist(r, "now_offerID") {
+	currentTime := time.Now()
+	NowTime := currentTime.Format("15:04")
+	now_userID, _ := getCookieValue(r, "now_userID")
+	_, err := app.Fabric.GetNowOffer(now_userID, NowTime)
+	if err == nil {
 		app.Request4View(w, r)
 	} else {
 		app.Request1View(w, r)
 	}
 }
 func (app *Application) Request1View(w http.ResponseWriter, r *http.Request) {
-	clearCookies(w, "now_offerID", "now_matchID", "choice", "optionA", "optionB", "optionC")
+	clearCookies(w, "choice", "optionA", "optionB", "optionC")
 	data := &struct {
 		NowCarID string
 		Flag bool
@@ -186,14 +195,17 @@ type request2_data struct {
 	MsgA1 string
 	MsgA2 string
 	MsgA3 string
+	MsgA4 string
 	FlagB bool
 	MsgB1 string
 	MsgB2 string
 	MsgB3 string
+	MsgB4 string
 	FlagC bool
 	MsgC1 string
 	MsgC2 string
 	MsgC3 string
+	MsgC4 string
 	Flag bool
 	Msg string
 } 
@@ -209,8 +221,9 @@ func (app *Application) Request2View(w http.ResponseWriter, r *http.Request) {
 		getDataFromCookies(r, "optionA", &optionA)
 		data.FlagA = true
 		data.MsgA1 = strconv.Itoa(optionA.MaxSoC)
-		data.MsgA2 = strconv.Itoa(optionA.Price)
-		data.MsgA3 = strconv.Itoa(optionA.Price)
+		data.MsgA2 = strconv.Itoa(optionA.PerPrice)
+		data.MsgA3 = strconv.Itoa(optionA.ParkPrice)
+		data.MsgA4 = strconv.Itoa(optionA.TolPrice)
 	}
 
 	if cookiesExist(r, "optionB") {
@@ -218,8 +231,9 @@ func (app *Application) Request2View(w http.ResponseWriter, r *http.Request) {
 		getDataFromCookies(r, "optionB", &optionB)
 		data.FlagB = true
 		data.MsgB1 = strconv.Itoa(optionB.MaxSoC)
-		data.MsgB2 = strconv.Itoa(optionB.Price)
-		data.MsgB3 = strconv.Itoa(optionB.Price)
+		data.MsgB2 = strconv.Itoa(optionB.PerPrice)
+		data.MsgB3 = strconv.Itoa(optionB.ParkPrice)
+		data.MsgB4 = strconv.Itoa(optionB.TolPrice)
 	}
 
 	if cookiesExist(r, "optionC") {
@@ -227,8 +241,9 @@ func (app *Application) Request2View(w http.ResponseWriter, r *http.Request) {
 		getDataFromCookies(r, "optionC", &optionC)
 		data.FlagC = true
 		data.MsgC1 = strconv.Itoa(optionC.MaxSoC)
-		data.MsgC2 = strconv.Itoa(optionC.Price)
-		data.MsgC3 = strconv.Itoa(optionC.Price)
+		data.MsgC2 = strconv.Itoa(optionC.PerPrice)
+		data.MsgC3 = strconv.Itoa(optionC.ParkPrice)
+		data.MsgC4 = strconv.Itoa(optionC.TolPrice)
 	}
 	showView(w, r, "request2.html", data)
 }
@@ -240,19 +255,21 @@ type request3_data struct {
 	ArrTime string
 	DepTime string
 	MaxSoC string
-	Price string
+	TolPrice string
 }
 func (app *Application) Request3View(w http.ResponseWriter, r *http.Request) {
+	currentTime := time.Now()
+	NowTime := currentTime.Format("15:04")
+	now_userID, _ := getCookieValue(r, "now_userID")
+
 	var offer Offer
-	now_offerID, _ := getCookieValue(r, "now_offerID")
-	offerAsBytes, _ := app.Fabric.ShowOfferbyID(now_offerID)
+	offerAsBytes, _ := app.Fabric.GetNowOffer(now_userID, NowTime)
 	json.Unmarshal([]byte(offerAsBytes), &offer)
 
 	var option Option
 	getDataFromCookies(r, "choice", &option)
 
 	var data request3_data
-	now_userID, _ := getCookieValue(r, "now_userID")
 	data.NowCarID, _ = app.Fabric.ShowCarbyUser(now_userID)
 
 	switch option.StationID {
@@ -269,26 +286,27 @@ func (app *Application) Request3View(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Acdc = "快充"
 	}
-	data.ArrTime = intToTime(offer.ArrTime)
-	data.DepTime = intToTime(offer.DepTime)
+	data.ArrTime = offer.ArrTime
+	data.DepTime = offer.DepTime
 	data.MaxSoC = strconv.Itoa(option.MaxSoC)
-	data.Price = strconv.Itoa(option.Price)
+	data.TolPrice = strconv.Itoa(option.TolPrice)
 
 	showView(w, r, "request3.html", data)
 }
 func (app *Application) Request4View(w http.ResponseWriter, r *http.Request) {
-	var offer Offer
-	now_offerID, _ := getCookieValue(r, "now_offerID")
-	offerAsBytes, _ := app.Fabric.ShowOfferbyID(now_offerID)
-	json.Unmarshal([]byte(offerAsBytes), &offer)
+	currentTime := time.Now()
+	NowTime := currentTime.Format("15:04")
+	now_userID, _ := getCookieValue(r, "now_userID")
 
 	var match Match
-	now_matchID, _ := getCookieValue(r, "now_matchID")
-	matchAsBytes, _ := app.Fabric.ShowMatchbyID(now_matchID)
+	matchAsBytes, _ := app.Fabric.GetNowMatch(now_userID, NowTime)
 	json.Unmarshal([]byte(matchAsBytes), &match)
 
+	var offer Offer
+	offerAsBytes, _ := app.Fabric.ShowOfferbyID(match.OfferID)
+	json.Unmarshal([]byte(offerAsBytes), &offer)
+
 	var data request3_data
-	now_userID, _ := getCookieValue(r, "now_userID")
 	data.NowCarID, _ = app.Fabric.ShowCarbyUser(now_userID)
 
 	switch match.StationID {
@@ -305,15 +323,19 @@ func (app *Application) Request4View(w http.ResponseWriter, r *http.Request) {
 	} else {
 		data.Acdc = "快充"
 	}
-	data.ArrTime = intToTime(offer.ArrTime)
-	data.DepTime = intToTime(offer.DepTime)
+	data.ArrTime = offer.ArrTime
+	data.DepTime = offer.DepTime
 	data.MaxSoC = strconv.Itoa(match.MaxSoC)
-	data.Price = strconv.Itoa(match.Price)
+	data.TolPrice = strconv.Itoa(match.TolPrice)
 
 	showView(w, r, "request4.html", data)
 }
 func (app *Application) TrackView(w http.ResponseWriter, r *http.Request) {
-	if cookiesExist(r, "now_offerID") {
+	currentTime := time.Now()
+	NowTime := currentTime.Format("15:04")
+	now_userID, _ := getCookieValue(r, "now_userID")
+	_, err := app.Fabric.GetNowMatch(now_userID, NowTime)
+	if err == nil {
 		app.TrackYesView(w, r)
 	} else {
 		app.TrackNoView(w, r)
@@ -330,22 +352,25 @@ func (app *Application) TrackNoView(w http.ResponseWriter, r *http.Request) {
 	showView(w, r, "trackNo.html", data)
 }
 func (app *Application) TrackYesView(w http.ResponseWriter, r *http.Request) {
-	var offer Offer
-	now_offerID, _ := getCookieValue(r, "now_offerID")
-	offerAsBytes, _ := app.Fabric.ShowOfferbyID(now_offerID)
-	json.Unmarshal([]byte(offerAsBytes), &offer)
+	currentTime := time.Now()
+	NowTime := currentTime.Format("15:04")
+	now_userID, _ := getCookieValue(r, "now_userID")
 
 	var match Match
-	now_matchID, _ := getCookieValue(r, "now_matchID")
-	matchAsBytes, _ := app.Fabric.ShowMatchbyID(now_matchID)
+	matchAsBytes, _ := app.Fabric.GetNowMatch(now_userID, NowTime)
 	json.Unmarshal([]byte(matchAsBytes), &match)
+
+	var offer Offer
+	offerAsBytes, _ := app.Fabric.ShowOfferbyID(match.OfferID)
+	json.Unmarshal([]byte(offerAsBytes), &offer)
+
 
 	// 讀取過程中電動汽車的充電功率
 	type AllPower struct {
         Powers []Power2 `json:"powers"`
     }
     var allPower AllPower
-    AllPowerAsBytes, _ := app.Fabric.ShowPowerbyMatch(now_matchID)
+    AllPowerAsBytes, _ := app.Fabric.ShowPowerbyMatch(match.MatchID)
     json.Unmarshal([]byte(AllPowerAsBytes), &allPower)
     powers := allPower.Powers
 
@@ -363,11 +388,11 @@ func (app *Application) TrackYesView(w http.ResponseWriter, r *http.Request) {
 		timeChargePairs = append(timeChargePairs, data)
 	}
 
-	data := TimeChargeData{
+	firstdata := TimeChargeData{
 		Time: offer.ArrTime,
 		Charge: offer.ArrSoC,
 	}
-	timeChargePairs = append(timeChargePairs, data)
+	timeChargePairs = append(timeChargePairs, firstdata)
 
 	
 
@@ -384,8 +409,6 @@ func (app *Application) TrackYesView(w http.ResponseWriter, r *http.Request) {
 		Msg3: "",
 		TimeChargeArray: timeChargePairs,
 	}
-
-	now_userID, _ := getCookieValue(r, "now_userID")
 	data.NowCarID, _ = app.Fabric.ShowCarbyUser(now_userID)
 
 	switch match.StationID {
@@ -448,15 +471,14 @@ func (app *Application) HistoryListView(w http.ResponseWriter, r *http.Request) 
 			Msg5: "",
 		}
 		var offer Offer
-		now_offerID, _ := getCookieValue(r, "now_offerID")
-		offerAsBytes, _ := app.Fabric.ShowOfferbyID(now_offerID)
+		offerAsBytes, _ := app.Fabric.ShowOfferbyID(match.OfferID)
 		json.Unmarshal([]byte(offerAsBytes), &offer)
 
 		data.Msg1 = offer.Date
-		data.Msg2 = intToTime(offer.ArrTime)
-		data.Msg3 = intToTime(offer.DepTime)
+		data.Msg2 = offer.ArrTime
+		data.Msg3 = offer.DepTime
 		data.Msg4 = strconv.Itoa(match.MaxSoC)
-		data.Msg5 = strconv.Itoa(match.Price)
+		data.Msg5 = strconv.Itoa(match.TolPrice)
 
 		allMatchData = append(allMatchData, data)
 	}
@@ -477,7 +499,6 @@ func (app *Application) HistoryListView(w http.ResponseWriter, r *http.Request) 
 	
 	data.NowCarID, _ = app.Fabric.ShowCarbyUser(now_userID)
 	showView(w, r, "historyList.html", data)
-	
 }
 func (app *Application) HistoryNoView(w http.ResponseWriter, r *http.Request) {
 	data := &struct {
@@ -586,26 +607,25 @@ func (app *Application) Offer(w http.ResponseWriter, r *http.Request)  {
 	currentTime := time.Now()
 	date := currentTime.Format("2006-01-02")
 
-	// 將進場時間轉換為區間段
+	// // 將進場時間轉換為區間段
 	arrTime := r.FormValue("arrTime")
-	arrTime2, err := timeToInt(arrTime)
-	if err != nil {
-		http.Error(w, "Invalid arrtime format", http.StatusBadRequest)
-	}
+	// arrTime2, err := timeToInt(arrTime)
+	// if err != nil {
+	// 	http.Error(w, "Invalid arrtime format", http.StatusBadRequest)
+	// }
 
-	// 將離場時間轉換為區間段
+	// // 將離場時間轉換為區間段
 	depTime := r.FormValue("depTime")
-	depTime2, err := timeToInt(depTime)
-	if err != nil {
-		http.Error(w, "Invalid depTime format", http.StatusBadRequest)
-	}
-	fmt.Println("deptime: " + depTime)
+	// depTime2, err := timeToInt(depTime)
+	// if err != nil {
+	// 	http.Error(w, "Invalid depTime format", http.StatusBadRequest)
+	// }
 
 	arrSoC := r.FormValue("arrSoC")
 	depSoC := r.FormValue("depSoC")
 	acdc := r.FormValue("acdc")
 	now_userID, _ := getCookieValue(r, "now_userID")
-	now_offerID, err := app.Fabric.Offer(date, strconv.Itoa(arrTime2), strconv.Itoa(depTime2), arrSoC, depSoC, acdc, now_userID)
+	now_offerID, err := app.Fabric.Offer(date, arrTime, depTime, arrSoC, depSoC, acdc, now_userID)
 
 	if err != nil {
 		// 申請充電失敗
@@ -626,13 +646,12 @@ func (app *Application) Offer(w http.ResponseWriter, r *http.Request)  {
 		showView(w, r, "request1.html", data)
 	}else{
 		// 申請充電成功
-		setCookie(w, "now_offerID", now_offerID)
 		fmt.Printf("[發送新請求] %s: %s\n", now_userID, now_offerID)
 		
 		// 呼叫最佳化函式1
-		optionA := Option{StationID: "A", ChargerID: 1, MaxSoC: 100, Price: 100}
-		optionB := Option{StationID: "B", ChargerID: 2, MaxSoC: 100, Price: 50}
-		optionC := Option{StationID: "C", ChargerID: 3, MaxSoC: 100, Price: 30}
+		optionA := Option{StationID: "A", ChargerID: 1, MaxSoC: 100, PerPrice: 100, ParkPrice: 300, TolPrice: 400}
+		optionB := Option{StationID: "B", ChargerID: 2, MaxSoC: 100, PerPrice: 50, ParkPrice: 300, TolPrice: 400}
+		optionC := Option{StationID: "C", ChargerID: 3, MaxSoC: 100, PerPrice: 30, ParkPrice: 300, TolPrice: 400}
 		setDataInCookies(w, "optionA", optionA)
 		setDataInCookies(w, "optionB", optionB)
 		setDataInCookies(w, "optionC", optionC)
@@ -655,14 +674,19 @@ func (app *Application) Choice(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) Match(w http.ResponseWriter, r *http.Request)  {
+	currentTime := time.Now()
+	NowTime := currentTime.Format("15:04")
+	now_userID, _ := getCookieValue(r, "now_userID")
+
+	var offer Offer
+	offerAsBytes, _ := app.Fabric.GetNowOffer(now_userID, NowTime)
+	json.Unmarshal([]byte(offerAsBytes), &offer)
+
 	var option Option
 	getDataFromCookies(r, "choice", &option)
 
-	now_offerID, _ := getCookieValue(r, "now_offerID")
-
-	now_matchID, _ := app.Fabric.Match(option.StationID, strconv.Itoa(option.ChargerID), strconv.Itoa(option.MaxSoC), strconv.Itoa(option.Price), now_offerID)
-	fmt.Printf("[發送新配對] %s: %s\n", now_offerID, now_matchID)
-	setCookie(w, "now_matchID", now_matchID)
+	now_matchID, _ := app.Fabric.Match(option.StationID, strconv.Itoa(option.ChargerID), strconv.Itoa(option.MaxSoC), strconv.Itoa(option.PerPrice), strconv.Itoa(option.ParkPrice), strconv.Itoa(option.TolPrice), offer.OfferID)
+	fmt.Printf("[發送新配對] %s: %s\n", offer.OfferID, now_matchID)
 
 	clearCookies(w, "choice", "optionA", "optionB", "optionC")
 	http.Redirect(w, r, "/request4.html", http.StatusSeeOther)

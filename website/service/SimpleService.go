@@ -32,8 +32,8 @@ func (t *ServiceSetup) Offer(date, arrTime, depTime, arrSoC, depSoC, acdc, userI
 	}
 	return string(respone.Payload), nil
 }
-func (t *ServiceSetup) Match(stationID, chargerID, maxSoC, price, offerID string) (string, error) {
-	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "match", Args: [][]byte{[]byte(stationID), []byte(chargerID), []byte(maxSoC), []byte(price), []byte(offerID)}}
+func (t *ServiceSetup) Match(stationID, chargerID, maxSoC, perPrice, parkPrice, tolPrice, now_offerID string) (string, error) {
+	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "match", Args: [][]byte{[]byte(stationID), []byte(chargerID), []byte(maxSoC), []byte(perPrice), []byte(parkPrice), []byte(tolPrice), []byte(now_offerID)}}
 	respone, err := t.Client.Execute(req)
 	if err != nil {
 		return "", err
@@ -59,6 +59,22 @@ func (t *ServiceSetup) GetUserbyCarID(carID string) (string, error) {
 }
 func (t *ServiceSetup) ShowCarbyUser(userID string) (string, error){
 	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "showCarbyUser", Args: [][]byte{[]byte(userID)}}
+	respone, err := t.Client.Query(req)
+	if err != nil {
+			return "", err
+	}
+	return string(respone.Payload), nil
+}
+func (t *ServiceSetup) GetNowOffer(userID, nowInt string) (string, error){
+	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "getNowOffer", Args: [][]byte{[]byte(userID), []byte(nowInt)}}
+	respone, err := t.Client.Query(req)
+	if err != nil {
+			return "", err
+	}
+	return string(respone.Payload), nil
+}
+func (t *ServiceSetup) GetNowMatch(userID, nowInt string) (string, error){
+	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "getNowMatch", Args: [][]byte{[]byte(userID), []byte(nowInt)}}
 	respone, err := t.Client.Query(req)
 	if err != nil {
 			return "", err
@@ -91,6 +107,24 @@ func (t *ServiceSetup) ShowMatchbyUser(userID string) (string, error){
 }
 func (t *ServiceSetup) ShowPowerbyMatch(matchID string) (string, error){
 	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "showPowerbyMatch", Args: [][]byte{[]byte(matchID)}}
+	respone, err := t.Client.Query(req)
+	if err != nil {
+			return "", err
+	}
+	return string(respone.Payload), nil
+}
+
+
+func (t *ServiceSetup) ShowAllOffer() (string, error){
+	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "showAllOffer", Args: [][]byte{}}
+	respone, err := t.Client.Query(req)
+	if err != nil {
+			return "", err
+	}
+	return string(respone.Payload), nil
+}
+func (t *ServiceSetup) ShowAllMatch() (string, error){
+	req := channel.Request{ChaincodeID: t.ChaincodeID, Fcn: "showAllMatch", Args: [][]byte{}}
 	respone, err := t.Client.Query(req)
 	if err != nil {
 			return "", err
