@@ -1,1 +1,4 @@
 Number,Time_in,Time_out,Soc_in,Soc_out,Soc_now,EV_capacity,se_number
+35,69,85,43.0,84.0,67.15,100,8
+38,73,87,41.0,68.0,56.75,100,9
+133,83,95,46.0,94.0,53.5,100,20
