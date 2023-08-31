@@ -209,6 +209,8 @@ class road:  #沒有新車加入
             
             m.setObjective(total_cost + ev_penalty + pc_penalty, GRB.MINIMIZE)
 
+            m.setParam("OutputFlag", 0)
+            
             m.optimize()
 
             ### 取計算結果
@@ -299,7 +301,7 @@ class road:  #沒有新車加入
 
             return_se_char = []
             for index in range(len(se_list)):
-                temp_power = power(1, se_list[index].name, x_se_char[now_time][index], now_time)
+                temp_power = power(1, se_list[index].name, x_se_char[now_time][index+1], now_time)
                 return_se_char.append(temp_power)
                 
             for index in range(len(ev_list)):
@@ -337,7 +339,7 @@ class road_new_ev: #有新車加入
         distance = math.sqrt((self.location_x - location_x)**2 + (self.location_y - location_y)**2)
         remainder = soc_in * capacity #電動車剩餘電量
         if(remainder*0.5 < distance):
-            print('電動車剩餘電量無法到達此場')
+            # print('電動車剩餘電量無法到達此場')
             return -1
         else:
             num_se = 0
@@ -347,7 +349,7 @@ class road_new_ev: #有新車加入
                     num_se = index+1
                     diff_time = self.se_list[index].time_out - time_in
             if(num_se == 0):
-                print('充電廠內沒有空位的充電樁')
+                # print('充電廠內沒有空位的充電樁')
                 return -1
             else:
                 add_ev = ev(name, time_in, time_out, soc_in, soc_out, soc_in, capacity, num_se)
@@ -431,7 +433,7 @@ class road_new_ev: #有新車加入
 
     def schedule(self):
         if(self.ev_check == -1):
-            return 0,0,0,0
+            return 0,0,0,0,0
         try:
             m = gp.Model("load_schedule")
             now_time = self.now_time
@@ -482,6 +484,8 @@ class road_new_ev: #有新車加入
             
             m.setObjective(total_cost + ev_penalty + pc_penalty, GRB.MINIMIZE)
 
+            m.setParam("OutputFlag", 0)
+
             m.optimize()
 
             x_Pnet = [0] * num_time
@@ -494,7 +498,7 @@ class road_new_ev: #有新車加入
             total_charge = 0.0
             for t in range(now_time-1, num_time):
                 if(ev_list[len(ev_list)-1].time_in < t+1 and ev_list[len(ev_list)-1].time_out > t+1):
-                    total_charge += se_char[t][ev_list[len(ev_list)-1].num_se-1].x
+                    total_charge += se_char[t][ev_list[len(ev_list)-1].num_se-1].x/12
                     x_se_char[t] = se_char[t][ev_list[len(ev_list)-1].num_se-1].x
 
             unit_price_of_ch, total_price_of_space, total_price = estimate_price(x_Pnet, x_se_char, tou, 1, ev_list[len(ev_list)-1].time_in, ev_list[len(ev_list)-1].time_out, self.efficiency, Ptr)

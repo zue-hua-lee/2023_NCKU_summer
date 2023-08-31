@@ -23,3 +23,4 @@ if __name__ == "__main__":
     myroad = road.road_new_ev(nowtime, name, time_in, time_out, soc_in, soc_out, capacity, char_type, location_x, location_y)
     name, final_soc,unit_price_of_ch, total_price_of_space, total_price = myroad.schedule()
     print(name, final_soc,unit_price_of_ch, total_price_of_space, total_price)
+    # print(1, 100, 30, 40, 1000)
