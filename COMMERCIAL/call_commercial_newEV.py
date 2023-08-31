@@ -21,5 +21,5 @@ if __name__ == "__main__":
     location_y = float(args[10])
     
     myroad = commercial.com_new_ev(nowtime, name, time_in, time_out, soc_in, soc_out, capacity, char_type, location_x, location_y)
-    name, final_soc,unit_price_of_ch, total_price_of_space= myroad.schedule()
-    print( name, final_soc,unit_price_of_ch, total_price_of_space)
+    name, final_soc,unit_price_of_ch, total_price_of_space, total_price = myroad.schedule()
+    print( name, final_soc,unit_price_of_ch, total_price_of_space, total_price)
