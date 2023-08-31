@@ -74,7 +74,7 @@ class road:  #沒有新車加入
     
     def read_parameter(self): #從本地端讀取資料
         try:
-            with open('cpos_parameter.csv', 'r', encoding='utf-8', errors='ignore', newline='') as file:
+            with open('./ROAD/cpos_parameter.csv', 'r', encoding='utf-8', errors='ignore', newline='') as file:
                 csv_reader = csv.reader(file)
                 for row in csv_reader:
                     if(row[1] == '2'):
@@ -90,7 +90,7 @@ class road:  #沒有新車加入
     
     def read_se_list(self):
         try:
-            with open('se_list.csv', 'r', newline='') as file:
+            with open('./ROAD/se_list.csv', 'r', newline='') as file:
                 csv_reader = csv.reader(file)
                 header = next(csv_reader)   #跳過第一行
                 for row in csv_reader:
@@ -103,7 +103,7 @@ class road:  #沒有新車加入
                     
     def read_ev_list(self):
         try:
-            with open('ev_list.csv', 'r', newline='') as file:
+            with open('./ROAD/ev_list.csv', 'r', newline='') as file:
                 csv_reader = csv.reader(file)
                 header = next(csv_reader)  #跳過第一行
                 for row in csv_reader:
@@ -117,7 +117,7 @@ class road:  #沒有新車加入
                         self.se_list[int(row[7])-1].time_out = int(row[2])
                     elif(int(row[2]) <= self.now_time): #離場時間小於現在時間踢出車列
                         try:
-                            with open('dep_ev.csv', 'a', newline='') as csvfile:
+                            with open('./ROAD/dep_ev.csv', 'a', newline='') as csvfile:
                                 writer = csv.writer(csvfile)
                                 writer.writerow(row)
                         except FileNotFoundError:
@@ -137,13 +137,12 @@ class road:  #沒有新車加入
         self.read_parameter()
         self.read_se_list()
         self.read_ev_list()
-        self.tou = self.read_file('tou.csv')
-        self.ev_load = self.read_file('ev_load_road.csv')
+        self.tou = self.read_file('./ROAD/tou.csv')
+        self.ev_load = self.read_file('./ROAD/ev_load_road.csv')
     
     def update_ev_list(self): #將新車加入
-        print('aa')
         try: 
-            with open('new_ev.csv', 'r', newline='') as csvfile:
+            with open('./ROAD/new_ev.csv', 'r', newline='') as csvfile:
                 reader = csv.reader(csvfile)
                 for row in reader:
                     temp_ev = ev(int(row[0]), int(row[1]), int(row[2]),
@@ -228,7 +227,7 @@ class road:  #沒有新車加入
                             x_se_char[t][index+1] = se_char[t][index].x 
             for t in range(num_time):
                 x_se_char[t][0] = t+1 
-            with open('charger_power.csv', mode='w', newline='') as file:
+            with open('./ROAD/charger_power.csv', mode='w', newline='') as file:
                 writer = csv.writer(file)
                 header = ["time"]
                 for index in range(len(se_list)):
@@ -252,7 +251,7 @@ class road:  #沒有新車加入
                 ev_list_arr[i][6] = ev_list[i].capacity
                 ev_list_arr[i][7] = ev_list[i].num_se
 
-            with open('ev_list.csv', 'w', newline='') as file:
+            with open('./ROAD/ev_list.csv', 'w', newline='') as file:
                 top_list = ['Number', 'Time_in', 'Time_out', 'Soc_in', 'Soc_out', 'Soc_now', 'EV_capacity', 'se_number']
                 csv_writer = csv.writer(file)
                 csv_writer.writerow(top_list)
@@ -285,11 +284,11 @@ class road:  #沒有新車加入
             # print("\n")
 
             #更新樁列
-            with open('se_list.csv', 'w', newline='') as csvfile:
+            with open('./ROAD/se_list.csv', 'w', newline='') as csvfile:
                 top_list = ['Number', 'Time_in', 'Time_out']
                 csv_writer = csv.writer(csvfile)
                 csv_writer.writerow(top_list)
-            with open('se_list.csv', 'a', newline='') as csvfile:
+            with open('./ROAD/se_list.csv', 'a', newline='') as csvfile:
                 new_se_list = [[0]*3 for _ in range(len(self.se_list))]
                 csv_writer = csv.writer(csvfile)
                 for index in range(len(self.se_list)):
@@ -331,15 +330,15 @@ class road_new_ev: #有新車加入
         self.pnet_plus = [0]*(self.num_time)     #正淨負載
         self.get_FCS_info()
         self.ev_check = 0                   #用來判斷電動車是否可以進場
-        if(self.check(name, time_in, time_out, soc_in, soc_out, capacity, char_type, location_x, location_y) == 0):  #檢查新車是否到的了本場
-            self.ev_check = -1
+        #檢查新車是否到的了本場
+        self.ev_check = self.check(name, time_in, time_out, soc_in, soc_out, capacity, char_type, location_x, location_y)
         
     def check(self, name, time_in, time_out, soc_in, soc_out, capacity, char_type, location_x, location_y):
         distance = math.sqrt((self.location_x - location_x)**2 + (self.location_y - location_y)**2)
         remainder = soc_in * capacity #電動車剩餘電量
         if(remainder*0.5 < distance):
             print('電動車剩餘電量無法到達此場')
-            return 0
+            return -1
         else:
             num_se = 0
             diff_time = 0
@@ -349,7 +348,7 @@ class road_new_ev: #有新車加入
                     diff_time = self.se_list[index].time_out - time_in
             if(num_se == 0):
                 print('充電廠內沒有空位的充電樁')
-                return 0
+                return -1
             else:
                 add_ev = ev(name, time_in, time_out, soc_in, soc_out, soc_in, capacity, num_se)
                 self.ev_list.append(add_ev)
@@ -373,7 +372,7 @@ class road_new_ev: #有新車加入
     
     def read_parameter(self): #從本地端讀取資料
         try:
-            with open('cpos_parameter.csv', 'r', encoding='utf-8', errors='ignore', newline='') as file:
+            with open('./ROAD/cpos_parameter.csv', 'r', encoding='utf-8', errors='ignore', newline='') as file:
                 csv_reader = csv.reader(file)
                 for row in csv_reader:
                     if(row[1] == '2'):
@@ -391,7 +390,7 @@ class road_new_ev: #有新車加入
     
     def read_se_list(self):
         try:
-            with open('se_list.csv', 'r', newline='') as file:
+            with open('./ROAD/se_list.csv', 'r', newline='') as file:
                 csv_reader = csv.reader(file)
                 header = next(csv_reader)   #跳過第一行
                 for row in csv_reader:
@@ -404,7 +403,7 @@ class road_new_ev: #有新車加入
                     
     def read_ev_list(self):
         try:
-            with open('ev_list.csv', 'r', newline='') as file:
+            with open('./ROAD/ev_list.csv', 'r', newline='') as file:
                 csv_reader = csv.reader(file)
                 header = next(csv_reader)  #跳過第一行
                 for row in csv_reader:
@@ -422,27 +421,13 @@ class road_new_ev: #有新車加入
         except Exception as e:
             print('發生錯誤', e)
             
-
-    def read_tou(self):
-        try: 
-            with open('tou.csv', 'r', newline='') as file:
-                csv_reader = csv.reader(file)
-                header = next(csv_reader)
-                info = []
-                for row in csv_reader:
-                    info.append(row[1])
-                self.tou = info
-        except FileNotFoundError:
-            print('文件未被找到')
-        except Exception as e:
-            print('發生錯誤', e)
         
     def get_FCS_info(self):
         self.read_parameter()
         self.read_se_list()
         self.read_ev_list()
-        self.tou = self.read_file('tou.csv')
-        self.ev_load = self.read_file('ev_load_road.csv')
+        self.tou = self.read_file('./ROAD/tou.csv')
+        self.ev_load = self.read_file('./ROAD/ev_load_road.csv')
 
     def schedule(self):
         if(self.ev_check == -1):
@@ -513,7 +498,7 @@ class road_new_ev: #有新車加入
                     x_se_char[t] = se_char[t][ev_list[len(ev_list)-1].num_se-1].x
 
             unit_price_of_ch, total_price_of_space, total_price = estimate_price(x_Pnet, x_se_char, tou, 1, ev_list[len(ev_list)-1].time_in, ev_list[len(ev_list)-1].time_out, self.efficiency, Ptr)
-            with open('new_ev.csv', 'w', newline='') as csvfile:
+            with open('./ROAD/new_ev.csv', 'w', newline='') as csvfile:
                 new_ev = [0]*8
                 csv_writer = csv.writer(csvfile)
                 new_ev[0] = str(self.ev_list[len(ev_list)-1].name)
@@ -539,7 +524,7 @@ class road_new_ev: #有新車加入
 
 
 
-# myfcs_1 = road(23,-1)
+# myfcs_1 = road(1,-1)
 # se_char = myfcs_1.schedule()
                 
 
