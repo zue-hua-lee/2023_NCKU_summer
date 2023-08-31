@@ -98,7 +98,7 @@ class com:  #沒有新車加入
     
     def read_parameter(self): #從本地端讀取資料
         try:
-            with open('cpos_parameter.csv', 'r', encoding='utf-8', errors='ignore',
+            with open('./COMMERCIAL/cpos_parameter.csv', 'r', encoding='utf-8', errors='ignore',
                       newline='') as file:
                 csv_reader = csv.reader(file)
                 info = [0]
@@ -121,7 +121,7 @@ class com:  #沒有新車加入
     
     def read_se_list(self):
         try:
-            with open('se_list.csv', 'r', newline='') as file:
+            with open('./COMMERCIAL/se_list.csv', 'r', newline='') as file:
                 csv_reader = csv.reader(file)
                 header = next(csv_reader)
                 for row in csv_reader:
@@ -134,7 +134,7 @@ class com:  #沒有新車加入
                     
     def read_ev_list(self):
         try:
-            with open('ev_list.csv', 'r', newline='') as file:
+            with open('./COMMERCIAL/ev_list.csv', 'r', newline='') as file:
                 csv_reader = csv.reader(file)
                 header = next(csv_reader)  #跳過第一行
                 for row in csv_reader:
@@ -148,7 +148,7 @@ class com:  #沒有新車加入
                         self.se_list[int(row[7])-1].time_out = int(row[2])
                     elif(int(row[2]) <= self.now_time): #離場時間小於現在時間踢出車列
                         try:
-                            with open('dep_ev.csv', 'a', newline='') as csvfile:
+                            with open('./COMMERCIAL/dep_ev.csv', 'a', newline='') as csvfile:
                                 writer = csv.writer(csvfile)
                                 writer.writerow(row)
                         except FileNotFoundError:
@@ -164,18 +164,18 @@ class com:  #沒有新車加入
             print('發生錯誤', e)
         
     def get_FCS_info(self):
-        self.load = self.read_file_2('load.csv')
-        self.pv = self.read_file_2('pv.csv')
-        self.ev_load = self.read_file('ev_load_commercial.csv')
-        self.ess = self.read_file('ess.csv')
-        self.tou = self.read_file('tou.csv') 
+        self.load = self.read_file_2('./COMMERCIAL/load.csv')
+        self.pv = self.read_file_2('./COMMERCIAL/v.csv')
+        self.ev_load = self.read_file('./COMMERCIAL/ev_load_commercial.csv')
+        self.ess = self.read_file('./COMMERCIAL/ess.csv')
+        self.tou = self.read_file('./COMMERCIAL/tou.csv') 
         self.read_parameter()
         self.read_se_list()
         self.read_ev_list()
         
     def update_ev_list(self): #將新車加入
         try: 
-            with open('new_ev.csv', 'r', newline='') as csvfile:
+            with open('./COMMERCIAL/new_ev.csv', 'r', newline='') as csvfile:
                 reader = csv.reader(csvfile)
                 for row in reader:
                     temp_ev = ev(int(row[0]), int(row[1]), int(row[2]),
@@ -298,7 +298,7 @@ class com:  #沒有新車加入
                             x_se_char[t][index+1] = se_char[t][index].x 
             for t in range(num_time):
                 x_se_char[t][0] = t+1 
-            with open('charger_power.csv', mode='w', newline='') as file:
+            with open('./COMMERCIAL/charger_power.csv', mode='w', newline='') as file:
                 writer = csv.writer(file)
                 header = ["time"]
                 for index in range(len(se_list)):
@@ -322,7 +322,7 @@ class com:  #沒有新車加入
                 ev_list_arr[i][5] = round(ev_list[i].soc_now*100, 2)
                 ev_list_arr[i][6] = ev_list[i].capacity
                 ev_list_arr[i][7] = ev_list[i].num_se
-            with open('ev_list.csv', 'w', newline='') as file:
+            with open('./COMMERCIAL/ev_list.csv', 'w', newline='') as file:
                 top_list = ['Number', 'Time_in', 'Time_out', 'Soc_in', 'Soc_out', 'Soc_now', 'EV_capacity', 'se_number']
                 csv_writer = csv.writer(file)
                 csv_writer.writerow(top_list)
@@ -368,18 +368,18 @@ class com:  #沒有新車加入
                     x_ess[t][2] = ess_char[t].x*efficiency/12/ess_cap
                     x_ess[t][3] = ess_dischar[t].x/12/ess_cap
 
-            with open('ess.csv', mode='w', newline='') as file:
+            with open('./COMMERCIAL/ess.csv', mode='w', newline='') as file:
                 writer = csv.writer(file)
                 header = ["time","ess"]
                 writer.writerow(header)
                 writer.writerows(x_ess) 
             
             #更新樁列
-            with open('se_list.csv', 'w', newline='') as csvfile:
+            with open('./COMMERCIAL/se_list.csv', 'w', newline='') as csvfile:
                 top_list = ['Number', 'Time_in', 'Time_out']
                 csv_writer = csv.writer(csvfile)
                 csv_writer.writerow(top_list)
-            with open('se_list.csv', 'a', newline='') as csvfile:
+            with open('./COMMERCIAL/se_list.csv', 'a', newline='') as csvfile:
                 new_se_list = [[0]*3 for _ in range(len(self.se_list))]
                 csv_writer = csv.writer(csvfile)
                 for index in range(len(self.se_list)):
@@ -422,15 +422,15 @@ class com_new_ev: #有新車加入
         self.Pbuy = [0]*(self.num_time)    #正淨負載
         self.get_FCS_info()
         self.ev_check = 0                   #用來判斷電動車是否可以進場
-        if(self.check(name, time_in, time_out, soc_in, soc_out, capacity, char_type, location_x, location_y) == 0):  #檢查新車是否到的了本場
-            self.ev_check = -1   
+        #檢查新車是否到的了本場
+        self.ev_check = self.check(name, time_in, time_out, soc_in, soc_out, capacity, char_type, location_x, location_y)
         
     def check(self, name, time_in, time_out, soc_in, soc_out, capacity, char_type, location_x, location_y):
         distance = math.sqrt((self.location_x - location_x)**2 + (self.location_y - location_y)**2)
         remainder = soc_in * capacity #電動車剩餘電量
         if(remainder*0.01 < distance):
             print('電動車剩餘電量無法到達此場')
-            return 0
+            return -1
         else:
             num_se = 0
             diff_time = 0
@@ -446,7 +446,7 @@ class com_new_ev: #有新車加入
                         diff_time = self.se_list[index].time_out - time_in
             if(num_se == 0):
                 print('充電廠內沒有空位的充電樁')
-                return 0
+                return -1
             else:
                 add_ev = ev(name, time_in, time_out, soc_in, soc_out, soc_in, capacity, num_se)
                 self.ev_list.append(add_ev)
@@ -493,7 +493,7 @@ class com_new_ev: #有新車加入
     
     def read_parameter(self): #從本地端讀取資料
         try:
-            with open('cpos_parameter.csv', 'r', encoding='utf-8', errors='ignore',
+            with open('./COMMERCIAL/cpos_parameter.csv', 'r', encoding='utf-8', errors='ignore',
                       newline='') as file:
                 csv_reader = csv.reader(file)
                 info = [0]
@@ -518,7 +518,7 @@ class com_new_ev: #有新車加入
     
     def read_se_list(self):
         try:
-            with open('se_list.csv', 'r', newline='') as file:
+            with open('./COMMERCIAL/se_list.csv', 'r', newline='') as file:
                 csv_reader = csv.reader(file)
                 header = next(csv_reader)
                 for row in csv_reader:
@@ -531,7 +531,7 @@ class com_new_ev: #有新車加入
                     
     def read_ev_list(self):
         try:
-            with open('ev_list.csv', 'r', newline='') as file:
+            with open('./COMMERCIAL/ev_list.csv', 'r', newline='') as file:
                 csv_reader = csv.reader(file)
                 header = next(csv_reader)  #跳過第一行
                 for row in csv_reader:
@@ -550,11 +550,11 @@ class com_new_ev: #有新車加入
             print('發生錯誤', e)
         
     def get_FCS_info(self):
-        self.load = self.read_file('load.csv')
-        self.pv = self.read_file('pv.csv')
-        self.ev_load = self.read_file('ev_load_commercial.csv')
-        self.ess = self.read_file('ess.csv')
-        self.tou = self.read_file('tou.csv') 
+        self.load = self.read_file('./COMMERCIAL/load.csv')
+        self.pv = self.read_file('./COMMERCIAL/pv.csv')
+        self.ev_load = self.read_file('./COMMERCIAL/ev_load_commercial.csv')
+        self.ess = self.read_file('./COMMERCIAL/ess.csv')
+        self.tou = self.read_file('./COMMERCIAL/tou.csv') 
         self.read_parameter()
         self.read_se_list()
         self.read_ev_list()
@@ -673,7 +673,7 @@ class com_new_ev: #有新車加入
             else:   
                 unit_price_of_ch, total_price_of_space, total_price = estimate_price(x_Pnet, x_se_char, tou, 2, ev_list[len(ev_list)-1].time_in, ev_list[len(ev_list)-1].time_out, self.efficiency, Ptr)
             
-            with open('new_ev.csv', 'w', newline='') as csvfile:
+            with open('./COMMERCIAL/new_ev.csv', 'w', newline='') as csvfile:
                 new_ev = [0]*8
                 csv_writer = csv.writer(csvfile)
                 new_ev[0] = str(self.ev_list[len(ev_list)-1].name)
@@ -694,13 +694,13 @@ class com_new_ev: #有新車加入
         
                 
 #測試用                
-myfcs = com_new_ev(15,121,15,23,16,97,100,2,6,0.5)
-ChargerID, final_soc, unit_price_of_ch, total_price_of_space, total_price = myfcs.schedule()
+# myfcs = com_new_ev(15,121,15,23,16,97,100,2,6,0.5)
+# ChargerID, final_soc, unit_price_of_ch, total_price_of_space, total_price = myfcs.schedule()
 
 
 
-myfcs_1 = com(15,1)
-se_char = myfcs_1.schedule()
+# myfcs_1 = com(15,1)
+# se_char = myfcs_1.schedule()
                 
 
 # myfcs_2 = fcs_new_ev(16,122,16,32,35,83,100,2,3.1,6.8)
