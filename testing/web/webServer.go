@@ -7,7 +7,9 @@ package web
 
 import (
 	"fmt"
-
+	"strings"
+	"strconv"
+	"os/exec"
 	"github.com/hyperledger/fabric/eep/web/controller"
 )
 
@@ -39,14 +41,14 @@ func  WebStart(app *controller.Application) {
 			checkdepsoc := strconv.Itoa(offers[num].DepSoC)
 			checkcapacity := strconv.Itoa(offers[num].Capacity)
 			checkacdc := strconv.Itoa(offers[num].Acdc)
-			checklocation_x := strconv.Itoa(offers[num].Location_x)
-			checklocation_y := strconv.Itoa(offers[num].Location_y)
+			checklocation_x := strconv.FormatFloat(offers[num].Location_x, 'f', -1, 64)
+			checklocation_y := strconv.FormatFloat(offers[num].Location_y, 'f', -1, 64)
 
 			// A場最佳化函式1
-			cmd := exec.Command("python", "../ROAD/call_road_newEV.py", checknowtime, checkcarnum, checkarrtime, checkdeptime, checkarrsoc, checkdepsoc, checkcapacity, checkacdc, checklocation_x, checklocation_y)
+			cmd := exec.Command("/usr/bin/python3", "./ROAD/call_road_newEV.py", checknowtime, checkcarnum, checkarrtime, checkdeptime, checkarrsoc, checkdepsoc, checkcapacity, checkacdc, checklocation_x, checklocation_y)
 			output, err := cmd.CombinedOutput()
 			if err != nil {
-				fmt.Println("執行失敗：", err)
+				fmt.Println("執行失敗1：", err)
 				return
 			}
 			matrixStr := string(output)
@@ -57,31 +59,31 @@ func  WebStart(app *controller.Application) {
 				checkvalue, err := strconv.Atoi(value)
 				if err != nil {
 					fmt.Printf("無法將字符轉換成整數: %v\n", err)
-					continue
+					return
 				}
 				switch j {
 				case 1:
-					optionA.ChargerID := checkvalue
+					optionA.ChargerID = checkvalue
 				case 2:
-					optionA.MaxSoC := checkvalue
+					optionA.MaxSoC = checkvalue
 				case 3:
-					optionA.PerPrice := checkvalue
+					optionA.PerPrice = checkvalue
 				case 4:
-					optionA.ParkPrice := checkvalue
+					optionA.ParkPrice = checkvalue
 				case 5:
-					optionA.TolPrice := checkvalue
+					optionA.TolPrice = checkvalue
 				}
 			}
 			// B場最佳化函式1
-			cmd := exec.Command("python", "../FCS/call_FCS_newEV.py", checknowtime, checkcarnum, checkarrtime, checkdeptime, checkarrsoc, checkdepsoc, checkcapacity, checkacdc, checklocation_x, checklocation_y)
-			output, err := cmd.CombinedOutput()
+			cmd = exec.Command("/usr/bin/python3", "./FCS/call_FCS_newEV.py", checknowtime, checkcarnum, checkarrtime, checkdeptime, checkarrsoc, checkdepsoc, checkcapacity, checkacdc, checklocation_x, checklocation_y)
+			output, err = cmd.CombinedOutput()
 			if err != nil {
-				fmt.Println("執行失敗：", err)
+				fmt.Println("執行失敗2：", err)
 				return
 			}
-			matrixStr := string(output)
+			matrixStr = string(output)
 			matrixStr = strings.TrimSpace(matrixStr)
-			matrixValues1 := strings.Split(matrixStr, " ")
+			matrixValues1 = strings.Split(matrixStr, " ")
 			optionB.StationID = "B"
 			for j, value := range matrixValues1 {
 				checkvalue, err := strconv.Atoi(value)
@@ -91,27 +93,27 @@ func  WebStart(app *controller.Application) {
 				}
 				switch j {
 				case 1:
-					optionB.ChargerID := checkvalue
+					optionB.ChargerID = checkvalue
 				case 2:
-					optionB.MaxSoC := checkvalue
+					optionB.MaxSoC = checkvalue
 				case 3:
-					optionB.PerPrice := checkvalue
+					optionB.PerPrice = checkvalue
 				case 4:
-					optionB.ParkPrice := checkvalue
+					optionB.ParkPrice = checkvalue
 				case 5:
-					optionB.TolPrice := checkvalue
+					optionB.TolPrice = checkvalue
 				}
 			}
 			// C場最佳化函式1
-			cmd := exec.Command("python", "../COMMERCIAL/call_commercial_newEV.py", checknowtime, checkcarnum, checkarrtime, checkdeptime, checkarrsoc, checkdepsoc, checkcapacity, checkacdc, checklocation_x, checklocation_y)
-			output, err := cmd.CombinedOutput()
+			cmd = exec.Command("/usr/bin/python3", "./COMMERCIAL/call_commercial_newEV.py", checknowtime, checkcarnum, checkarrtime, checkdeptime, checkarrsoc, checkdepsoc, checkcapacity, checkacdc, checklocation_x, checklocation_y)
+			output, err = cmd.CombinedOutput()
 			if err != nil {
-				fmt.Println("執行失敗：", err)
+				fmt.Println("執行失敗3：", err)
 				return
 			}
-			matrixStr := string(output)
+			matrixStr = string(output)
 			matrixStr = strings.TrimSpace(matrixStr)
-			matrixValues1 := strings.Split(matrixStr, " ")
+			matrixValues1 = strings.Split(matrixStr, " ")
 			optionC.StationID = "C"
 			for j, value := range matrixValues1 {
 				checkvalue, err := strconv.Atoi(value)
@@ -121,15 +123,15 @@ func  WebStart(app *controller.Application) {
 				}
 				switch j {
 				case 1:
-					optionC.ChargerID := checkvalue
+					optionC.ChargerID = checkvalue
 				case 2:
-					optionC.MaxSoC := checkvalue
+					optionC.MaxSoC = checkvalue
 				case 3:
-					optionC.PerPrice := checkvalue
+					optionC.PerPrice = checkvalue
 				case 4:
-					optionC.ParkPrice := checkvalue
+					optionC.ParkPrice = checkvalue
 				case 5:
-					optionC.TolPrice := checkvalue
+					optionC.TolPrice = checkvalue
 				}
 			}
 			options := []controller.Option{optionA, optionB, optionC}
@@ -143,34 +145,41 @@ func  WebStart(app *controller.Application) {
 
 			fmt.Printf("station: %s, tolPrice: %d\n", option.StationID, option.TolPrice)
 
+			var choice [3]string
 			switch option.StationID {
 			case "A":
-				choice := [3]int{1, -1, -1}
+				choice[0] = "1"
+				choice[1] = "-1"
+				choice[2] = "-1"
 			case "B":
-				choice := [3]int{-1, 1, -1}
+				choice[0] = "-1"
+				choice[1] = "1"
+				choice[2] = "-1"
 			case "C":
-				choice := [3]int{-1, -1, 1}
+				choice[0] = "-1"
+				choice[1] = "-1"
+				choice[2] = "1"
 			}
 
 			// A場最佳化函式2
-			cmd := exec.Command("python", "../ROAD/call_road.py", strconv.Itoa(i), choice[0])
-			_, err := cmd.CombinedOutput()
+			cmd = exec.Command("/usr/bin/python3", "./ROAD/call_road.py", strconv.Itoa(i), choice[0])
+			_, err = cmd.CombinedOutput()
 			if err != nil {
-				fmt.Println("執行失敗：", err)
+				fmt.Println("執行失敗4：", err)
 				return
 			}
 			// B場最佳化函式2
-			cmd := exec.Command("python", "../FCS/call_FCS.py", strconv.Itoa(i), choice[1])
-			_, err := cmd.CombinedOutput()
+			cmd = exec.Command("/usr/bin/python3", "./FCS/call_FCS.py", strconv.Itoa(i), choice[1])
+			_, err = cmd.CombinedOutput()
 			if err != nil {
-				fmt.Println("執行失敗：", err)
+				fmt.Println("執行失敗5：", err)
 				return
 			}
 			// C場最佳化函式3
-			cmd := exec.Command("python", "../COMMERCIAL/call_commercial.py", strconv.Itoa(i), choice[2])
-			_, err := cmd.CombinedOutput()
+			cmd = exec.Command("/usr/bin/python3", "./COMMERCIAL/call_commercial.py", strconv.Itoa(i), choice[2])
+			_, err = cmd.CombinedOutput()
 			if err != nil {
-				fmt.Println("執行失敗：", err)
+				fmt.Println("執行失敗6：", err)
 				return
 			}
 		}
@@ -181,10 +190,10 @@ func  WebStart(app *controller.Application) {
 		// 回傳參數: 每個樁的功率、目前場內汽車的SoC
 
 		// A場最佳化函式3
-		cmd := exec.Command("python", "../ROAD/call_road.py", strconv.Itoa(i), "2")
+		cmd := exec.Command("/usr/bin/python3", "./ROAD/call_road.py", strconv.Itoa(i), "2")
 		output, err := cmd.CombinedOutput()
 		if err != nil {
-			fmt.Println("執行失敗：", err)
+			fmt.Println("執行失敗7：", err)
 			return
 		}
 		matrixStr := string(output)
@@ -195,7 +204,7 @@ func  WebStart(app *controller.Application) {
 		for _, row := range rows {
 			var power controller.Power
 			values := strings.Fields(row)
-			power.StationID := "A"
+			power.StationID = "A"
 			checkchargerID, err := strconv.Atoi(values[1])
 			if err != nil {
 				fmt.Printf("無法將字符轉換成整數1: %v\n", err)
@@ -220,20 +229,20 @@ func  WebStart(app *controller.Application) {
 		}
 
 		// B場最佳化函式3
-		cmd := exec.Command("python", "../FCS/call_FCS.py", strconv.Itoa(i), "2")
-		output, err := cmd.CombinedOutput()
+		cmd = exec.Command("/usr/bin/python3", "./FCS/call_FCS.py", strconv.Itoa(i), "2")
+		output, err = cmd.CombinedOutput()
 		if err != nil {
-			fmt.Println("執行失敗：", err)
+			fmt.Println("執行失敗8：", err)
 			return
 		}
-		matrixStr := string(output)
+		matrixStr = string(output)
 		matrixStr = strings.TrimSpace(matrixStr)
-		rows := strings.Split(matrixStr, "\n")
+		rows = strings.Split(matrixStr, "\n")
 	
 		for _, row := range rows {
 			var power controller.Power
 			values := strings.Fields(row)
-			power.StationID := "B"
+			power.StationID = "B"
 			checkchargerID, err := strconv.Atoi(values[1])
 			if err != nil {
 				fmt.Printf("無法將字符轉換成整數1: %v\n", err)
@@ -258,20 +267,20 @@ func  WebStart(app *controller.Application) {
 		}
 
 		// C場最佳化函式3
-		cmd := exec.Command("python", "../COMMERCIAL/call_commercial.py", strconv.Itoa(i), "2")
-		output, err := cmd.CombinedOutput()
+		cmd = exec.Command("/usr/bin/python3", "./COMMERCIAL/call_commercial.py", strconv.Itoa(i), "2")
+		output, err = cmd.CombinedOutput()
 		if err != nil {
-			fmt.Println("執行失敗：", err)
+			fmt.Println("執行失敗9：", err)
 			return
 		}
-		matrixStr := string(output)
+		matrixStr = string(output)
 		matrixStr = strings.TrimSpace(matrixStr)
-		rows := strings.Split(matrixStr, "\n")
+		rows = strings.Split(matrixStr, "\n")
 	
 		for _, row := range rows {
 			var power controller.Power
 			values := strings.Fields(row)
-			power.StationID := "C"
+			power.StationID = "C"
 			checkchargerID, err := strconv.Atoi(values[1])
 			if err != nil {
 				fmt.Printf("無法將字符轉換成整數1: %v\n", err)
@@ -299,11 +308,14 @@ func  WebStart(app *controller.Application) {
 		fmt.Printf("第%d區間上鍊開始\n",i)
 		app.SetPower(powers)
 		fmt.Printf("第%d區間上鍊結束\n",i)
+
+		if i % 5 == 0 {
+			fmt.Println("\n\nOffer")
+			app.ShowAllOffer()
+			fmt.Println("\n\nMatch")
+			app.ShowAllMatch()
+			fmt.Println("\n\nPower")
+			app.ShowAllPower()
+		}
 	}
-	fmt.Println("\n\nOffer")
-	app.ShowAllOffer()
-	fmt.Println("\n\nMatch")
-	app.ShowAllMatch()
-	fmt.Println("\n\nPower")
-	app.ShowAllPower()
 }
