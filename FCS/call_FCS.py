@@ -13,7 +13,7 @@ if __name__ == "__main__":
     ev_new = int(args[2])
     
     myroad = FCS.fcs(nowtime,ev_new)
-    se_char= myroad.schedule()
+    se_char = myroad.schedule()
     return_se_char = [[0]*5 for _ in range(len(se_char))]
     for index in range(len(se_char)):
         return_se_char[index][0] = se_char[index].StationID
