@@ -53,6 +53,12 @@ h2 {
   margin: 1.5rem;
 }
 
+h3 {
+  font-size: 1.5rem;
+  text-align: center;
+  margin: 1.5rem;
+}
+
 .headerText {
   font-size: 1rem;
 }
